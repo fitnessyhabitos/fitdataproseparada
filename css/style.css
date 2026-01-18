@@ -100,7 +100,8 @@ nav.bottom-nav { flex-shrink: 0; height: calc(60px + var(--safe-bottom)); paddin
 .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
 input:checked + .slider { background-color: var(--accent-color); } input:checked + .slider:before { transform: translateX(22px); }
 
-.compare-wrapper { position: relative; width: 100%; height: 250px; background: black; border-radius: 8px; overflow: hidden; margin-top: 5px; border:1px solid #333; }
+/* FOTOS: FIX ALTURA */
+.compare-wrapper { position: relative; width: 100%; height: 250px; min-height: 250px; background: black; border-radius: 8px; overflow: hidden; margin-top: 5px; border:1px solid #333; }
 .compare-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; }
 
 .img-overlay { clip-path: inset(0 0 0 0); border-right: 2px solid white; }
