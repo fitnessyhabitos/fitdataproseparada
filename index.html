@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Fit Data">
     <meta name="theme-color" content="#050505">
+
     <title>Fit Data | High Performance</title>
     <link rel="icon" href="favicon.ico">
     <link rel="apple-touch-icon" href="logo.png">
+    
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -234,15 +238,20 @@
         <section id="workout-view" class="view-container">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; position:sticky; top:0; background:var(--bg-color); z-index:10; padding:10px 0; border-bottom:1px solid #222;">
                 <button onclick="window.switchTab('routines-view')" style="background:none; border:none; color:#666; font-size:1.5rem;">✕</button>
+                
                 <div style="text-align:center;">
                     <span style="font-size:0.6rem; color:#666;">TIEMPO</span><br>
                     <span id="mini-timer" style="color:var(--accent-color); font-weight:bold;">00:00</span>
                 </div>
-                <button class="btn-small btn" onclick="window.promptRPE()">TERMINAR</button>
+                
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button class="btn-danger btn-small" style="margin:0; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px;" onclick="window.cancelWorkout()">🗑️</button>
+                    <button class="btn-small btn" style="margin:0;" onclick="window.promptRPE()">TERMINAR</button>
+                </div>
             </div>
+            
             <h2 id="workout-title" style="margin-bottom:20px;">Entreno</h2>
             <div id="workout-exercises"></div>
-            <button class="btn-outline" style="border-color:#f55; color:#f55; margin-top:20px;" onclick="window.cancelWorkout()">🗑️ CANCELAR ENTRENO</button>
         </section>
 
         <section id="admin-view" class="view-container">
@@ -405,5 +414,6 @@
     </div>
 
     <script type="module" src="js/app.js"></script>
+
 </body>
 </html>
