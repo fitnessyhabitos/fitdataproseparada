@@ -115,6 +115,7 @@
             </div>
 
             <button class="btn-outline" style="margin-bottom:15px;" onclick="window.openProgress()">📈 EVOLUCIÓN POR EJERCICIO</button>
+
             <div class="card">
                 <h3>MAPA MUSCULAR</h3>
                 <div id="heatmap-container"></div>
@@ -191,7 +192,6 @@
 
             <div class="card">
                 <h3>CONFIGURACIÓN</h3>
-                
                 <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                     <span>Mostrar Pliegues</span>
                     <label class="switch"><input type="checkbox" id="cfg-show-skinfolds" onchange="window.saveSelfConfig('showSkinfolds', this.checked)"><span class="slider"></span></label>
@@ -200,7 +200,6 @@
                     <span>Mostrar Medidas</span>
                     <label class="switch"><input type="checkbox" id="cfg-show-measures" onchange="window.saveSelfConfig('showMeasurements', this.checked)"><span class="slider"></span></label>
                 </div>
-
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                      <span>Tiempo Descanso (s)</span>
                      <input type="number" id="cfg-rest-time" style="width:80px; margin:0; text-align:center;" value="60">
@@ -278,14 +277,14 @@
                 </div>
                 <h2 id="coach-user-name" style="margin:0;">Usuario</h2>
                 <p id="coach-user-email" style="color:#666; font-size:0.8rem;"></p>
-                <p id="coach-user-meta" style="color:#888; font-size:0.7rem; margin-top:5px;"></p>
+                <div id="coach-user-meta" style="color:#888; font-size:0.7rem; margin-top:5px;"></div>
                 <div id="pending-approval-banner" class="hidden" style="margin-top:15px;">
                     <button class="btn btn-success" onclick="window.approveUser()">✅ APROBAR ACCESO</button>
                 </div>
             </div>
             
             <div class="card">
-                <h3>⚙️ CONFIGURACIÓN</h3>
+                <h3>⚙️ CONFIGURACIÓN ATLETA</h3>
                 <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                     <span>Habilitar Pliegues</span>
                     <label class="switch"><input type="checkbox" id="coach-toggle-skinfolds" onchange="window.toggleUserFeature('showSkinfolds', this.checked)"><span class="slider"></span></label>
@@ -406,6 +405,5 @@
     </div>
 
     <script type="module" src="js/app.js"></script>
-
 </body>
 </html>

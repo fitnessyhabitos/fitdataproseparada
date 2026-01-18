@@ -24,6 +24,12 @@ let chartInstance=null, progressChart=null, fatChartInstance=null, measureChartI
 let selectedUserCoach=null, selectedUserObj=null, editingRoutineId=null, coachChart=null, currentPose='front', coachCurrentPose='front', allRoutinesCache=[], assistantsCache=[];
 let currentRoutineSelections = [];
 
+// --- HELPER: NORMALIZAR TEXTO (TILDES) ---
+// Convierte "Bíceps" -> "biceps", "Crúnch" -> "crunch"
+const normalizeText = (text) => {
+    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+};
+
 // --- SISTEMA DE SONIDO ---
 function unlockAudio() {
     if(!audioCtx) {
@@ -61,16 +67,28 @@ window.testSound = () => { play5Beeps(); };
 // --- HELPERS EJERCICIOS ---
 function getExerciseData(name) {
     if(!name) return { img: 'logo.png', mInfo: {main:'General', sec:[]}, type:'c' };
+    
+    // 1. Intentar búsqueda exacta
     let match = EXERCISES.find(e => e.n === name);
+    
+    // 2. Intentar búsqueda normalizada (sin tildes)
     if (!match) {
-        const cleanName = name.toLowerCase().replace(/ de | con | en | el | la /g, " ").trim();
+        const cleanInput = normalizeText(name);
+        match = EXERCISES.find(e => normalizeText(e.n) === cleanInput);
+    }
+
+    // 3. Intentar búsqueda flexible (palabras clave)
+    if (!match) {
+        const cleanName = normalizeText(name);
         match = EXERCISES.find(e => {
-            const cleanDbName = e.n.toLowerCase().replace(/ de | con | en | el | la /g, " ").trim();
+            const cleanDbName = normalizeText(e.n);
             return cleanDbName.includes(cleanName) || cleanName.includes(cleanDbName);
         });
     }
+    
     if (!match) {
-        const n = name.toLowerCase();
+        // Fallback por grupo muscular si no se encuentra el nombre
+        const n = normalizeText(name);
         let m = "General", img = "logo.png";
         if(n.includes("press")||n.includes("pecho")||n.includes("aperturas")) { m="Pecho"; img="pecho.png"; }
         else if(n.includes("remo")||n.includes("jalon")||n.includes("espalda")||n.includes("dominadas")) { m="Espalda"; img="espalda.png"; }
@@ -119,7 +137,6 @@ onAuthStateChanged(auth, async (user) => {
                 setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 1500); 
                 document.getElementById('main-header').classList.remove('hidden');
                 document.getElementById('bottom-nav').classList.remove('hidden');
-                
                 loadRoutines();
                 const savedW = localStorage.getItem('fit_active_workout');
                 if(savedW) {
@@ -199,7 +216,14 @@ window.openEditor = async (id=null) => {
     renderSelectedSummary();
     switchTab('editor-view');
 };
-window.filterExercises = (t) => { const filtered = EXERCISES.filter(e => e.n.toLowerCase().includes(t.toLowerCase())); renderExercises(filtered); };
+
+// FILTRO CON NORMALIZACIÓN (Tildes)
+window.filterExercises = (t) => { 
+    const cleanSearch = normalizeText(t);
+    const filtered = EXERCISES.filter(e => normalizeText(e.n).includes(cleanSearch)); 
+    renderExercises(filtered); 
+};
+
 function renderExercises(l) {
     const c = document.getElementById('exercise-selector-list'); c.innerHTML = '';
     l.forEach(e => {
@@ -228,6 +252,7 @@ window.saveRoutine = async () => {
 };
 window.delRoutine = async (id) => { if(confirm("¿Borrar?")) await deleteDoc(doc(db,"routines",id)); };
 
+// --- FOTOS Y SLIDER (USUARIO) ---
 window.switchPose = (pose) => { currentPose = pose; document.getElementById('tab-front').classList.toggle('active', pose==='front'); document.getElementById('tab-back').classList.toggle('active', pose==='back'); updatePhotoDisplay(userData); };
 function updatePhotoDisplay(u) {
     const prefix = currentPose === 'front' ? '' : '_back';
@@ -240,7 +265,47 @@ function updatePhotoDisplay(u) {
 window.loadCompImg = (inp, field) => { if(inp.files[0]) { const r = new FileReader(); r.onload = (e) => { const img = new Image(); img.src = e.target.result; img.onload = async () => { const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); const scale = 600 / img.width; canvas.width = 600; canvas.height = img.height * scale; ctx.drawImage(img, 0, 0, canvas.width, canvas.height); const dataUrl = canvas.toDataURL('image/jpeg', 0.7); const prefix = currentPose === 'front' ? '' : '_back'; const fieldName = field === 'before' ? `photoBefore${prefix}` : `photoAfter${prefix}`; const dateField = field === 'before' ? `dateBefore${prefix}` : `dateAfter${prefix}`; const today = new Date().toLocaleDateString(); let update = {}; update[fieldName] = dataUrl; update[dateField] = today; await updateDoc(doc(db, "users", currentUser.uid), update); userData[fieldName] = dataUrl; userData[dateField] = today; updatePhotoDisplay(userData); }; }; r.readAsDataURL(inp.files[0]); } };
 window.deletePhoto = async (type) => { if(!confirm("¿Borrar?")) return; const prefix = currentPose === 'front' ? '' : '_back'; const f = type === 'before' ? `photoBefore${prefix}` : `photoAfter${prefix}`; let u={}; u[f]=""; await updateDoc(doc(db,"users",currentUser.uid),u); userData[f]=""; updatePhotoDisplay(userData); }
 window.moveSlider = (v) => { document.getElementById('img-overlay').style.clipPath = `inset(0 0 0 ${v}%)`; document.getElementById('slider-handle').style.left = `${v}%`; };
-window.moveCoachSlider = (v) => { document.getElementById('coach-overlay-img').style.clipPath = `inset(0 0 0 ${v}%)`; document.getElementById('coach-slider-handle').style.left = `${v}%`; };
+
+// --- FOTOS Y SLIDER (COACH) - LÓGICA CORREGIDA ---
+window.switchCoachPose = (pose) => {
+    coachCurrentPose = pose;
+    document.getElementById('coach-tab-front').classList.toggle('active', pose==='front');
+    document.getElementById('coach-tab-back').classList.toggle('active', pose==='back');
+    updateCoachPhotoDisplay(pose);
+};
+
+function updateCoachPhotoDisplay(pose) {
+    const u = selectedUserObj;
+    if(!u) return;
+    const prefix = pose === 'front' ? '' : '_back';
+    const b = u[`photoBefore${prefix}`] || ''; // Si no hay foto, string vacío
+    const a = u[`photoAfter${prefix}`] || '';
+    const dateB = u[`dateBefore${prefix}`] || '-';
+    const dateA = u[`dateAfter${prefix}`] || '-';
+    
+    const pCont = document.getElementById('coach-photos-container');
+    
+    // INYECTAMOS HTML CON CLASES Y ESTILOS QUE FUERCEN VISIBILIDAD
+    pCont.innerHTML = `
+        <div class="compare-wrapper" style="min-height:250px; background:#000;">
+            <div class="slider-labels"><span class="label-tag">ANTES</span><span class="label-tag">AHORA</span></div>
+            <img src="${b}" class="compare-img" style="display:${b ? 'block' : 'none'}">
+            <img src="${a}" id="coach-overlay-img" class="compare-img img-overlay" style="clip-path:inset(0 0 0 0); display:${a ? 'block' : 'none'}">
+            <div class="slider-handle" id="coach-slider-handle" style="left:0%"><div class="slider-btn"></div></div>
+        </div>
+        <input type="range" min="0" max="100" value="0" style="width:100%; margin-top:15px;" oninput="window.moveCoachSlider(this.value)">
+    `;
+    
+    document.getElementById('coach-date-before').innerText = `ANTES (${dateB})`;
+    document.getElementById('coach-date-after').innerText = `AHORA (${dateA})`;
+}
+
+window.moveCoachSlider = (v) => {
+    const overlay = document.getElementById('coach-overlay-img');
+    const handle = document.getElementById('coach-slider-handle');
+    if(overlay) overlay.style.clipPath = `inset(0 0 0 ${v}%)`;
+    if(handle) handle.style.left = `${v}%`;
+};
 
 // --- GRÁFICA MULTI-LINEA ---
 function renderMeasureChart(canvasId, historyData) {
@@ -260,13 +325,12 @@ function renderMeasureChart(canvasId, historyData) {
     if(canvasId === 'chartMeasures') measureChartInstance = newChart; else coachMeasureChart = newChart;
 }
 
-// --- PERFIL DE USUARIO (REORGANIZADO) ---
+// --- PERFIL DE USUARIO ---
 window.loadProfile = async () => {
     document.getElementById('profile-name').innerText = userData.name;
     if(userData.photo) { document.getElementById('avatar-text').style.display='none'; document.getElementById('avatar-img').src = userData.photo; document.getElementById('avatar-img').style.display='block'; }
     updatePhotoDisplay(userData);
     
-    // Configuración Switches
     document.getElementById('cfg-show-skinfolds').checked = !!userData.showSkinfolds;
     document.getElementById('cfg-show-measures').checked = !!userData.showMeasurements;
     if(userData.restTime) document.getElementById('cfg-rest-time').value = userData.restTime;
@@ -325,11 +389,11 @@ window.loadProfile = async () => {
     });
 }
 
-// --- CONFIGURACIÓN PROPIA (Self Toggles) ---
+// --- CONFIGURACIÓN PROPIA ---
 window.saveSelfConfig = async (feature, value) => {
     const update = {}; update[feature] = value;
     await updateDoc(doc(db, "users", currentUser.uid), update);
-    userData[feature] = value; // Update local state immediately
+    userData[feature] = value; 
     window.loadProfile();
 };
 
@@ -617,6 +681,7 @@ window.assignToAssistant = async (assistantId) => {
     alert("Atleta reasignado"); openCoachView(selectedUserCoach, selectedUserObj);
 };
 
+// --- FICHA COACH (CORREGIDA VISTA MEDIDAS Y FOTOS) ---
 async function openCoachView(uid,u) {
     selectedUserCoach=uid;
     const freshSnap = await getDoc(doc(db, "users", uid));
@@ -638,13 +703,12 @@ async function openCoachView(uid,u) {
         } else {
             adminActions += `<button class="btn-small btn-danger" onclick="window.updateUserRole('athlete')">Bajar a Atleta</button>`;
         }
-        // ASIGNAR A OTRO COACH (Siempre visible si hay coaches)
         if(freshU.role === 'athlete') {
-             // Forzar carga de assistants
-             const qAssist = query(collection(db,"users"), where("role", "==", "assistant"));
-             const snapA = await getDocs(qAssist);
-             assistantsCache = snapA.docs.map(d=>({id:d.id, name:d.data().name}));
-             
+             if(assistantsCache.length === 0) {
+                 const qAssist = query(collection(db,"users"), where("role", "==", "assistant"));
+                 const snapA = await getDocs(qAssist);
+                 assistantsCache = snapA.docs.map(d=>({id:d.id, name:d.data().name}));
+             }
              if(assistantsCache.length > 0) {
                  let options = `<option value="">-- Asignar a Coach --</option>`;
                  assistantsCache.forEach(a => options += `<option value="${a.id}">${a.name}</option>`);
@@ -662,7 +726,8 @@ async function openCoachView(uid,u) {
     const pCard = document.getElementById('coach-view-skinfolds');
     const mCard = document.getElementById('coach-view-measures');
     
-    if(freshU.showSkinfolds && freshU.skinfoldHistory && freshU.skinfoldHistory.length > 0) {
+    // CORRECCIÓN: MOSTRAR SI TIENE DATOS, INDEPENDIENTE DEL TOGGLE
+    if(freshU.skinfoldHistory && freshU.skinfoldHistory.length > 0) {
         pCard.classList.remove('hidden');
         if(coachFatChart) coachFatChart.destroy();
         const ctxF = document.getElementById('coachFatChart');
@@ -671,7 +736,7 @@ async function openCoachView(uid,u) {
         coachFatChart = new Chart(ctxF, { type: 'line', data: { labels: labels, datasets: [{ label: '% Grasa', data: dataF, borderColor: '#ffaa00', tension: 0.3 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#333' } }, x: { display: false } }, maintainAspectRatio: false } });
     } else { pCard.classList.add('hidden'); }
 
-    if(freshU.showMeasurements && freshU.measureHistory && freshU.measureHistory.length > 0) {
+    if(freshU.measureHistory && freshU.measureHistory.length > 0) {
         mCard.classList.remove('hidden');
         renderMeasureChart('coachMeasuresChart', freshU.measureHistory);
     } else { mCard.classList.add('hidden'); }
@@ -720,7 +785,7 @@ async function openCoachView(uid,u) {
                 const detailsStr = d.details ? encodeURIComponent(JSON.stringify(d.details)) : "";
                 const noteStr = d.note ? encodeURIComponent(d.note) : "";
                 const btnVer = d.details ? `<button class="btn-small btn-outline" style="margin:0; padding:2px 6px;" onclick="viewWorkoutDetails('${d.routine}', '${detailsStr}', '${noteStr}')">Ver Detalles</button>` : '';
-                hList.innerHTML += `<div class="history-row" style="grid-template-columns: 60px 1fr 30px 40px;"><div class="hist-date">${date}</div><div class="hist-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${d.routine}</div><div class="hist-rpe">${rpeBadge}</div><div>${btnVer}</div></div>`;
+                hList.innerHTML += `<div class="history-row" style="grid-template-columns: 60px 1fr 30px 80px;"><div class="hist-date">${date}</div><div class="hist-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${d.routine}</div><div class="hist-rpe">${rpeBadge}</div><div>${btnVer}</div></div>`;
             });
         }
     } catch(e) { console.error("Error loading coach details", e); hList.innerHTML='Error cargando datos.'; }
