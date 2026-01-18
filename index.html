@@ -3,19 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Fit Data">
     <meta name="theme-color" content="#050505">
-
     <title>Fit Data | High Performance</title>
     <link rel="icon" href="favicon.ico">
     <link rel="apple-touch-icon" href="logo.png">
-    
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -194,7 +190,17 @@
             </div>
 
             <div class="card">
-                <h3>CONFIGURACIÓN & ALARMAS</h3>
+                <h3>CONFIGURACIÓN</h3>
+                
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span>Mostrar Pliegues</span>
+                    <label class="switch"><input type="checkbox" id="cfg-show-skinfolds" onchange="window.saveSelfConfig('showSkinfolds', this.checked)"><span class="slider"></span></label>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span>Mostrar Medidas</span>
+                    <label class="switch"><input type="checkbox" id="cfg-show-measures" onchange="window.saveSelfConfig('showMeasurements', this.checked)"><span class="slider"></span></label>
+                </div>
+
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                      <span>Tiempo Descanso (s)</span>
                      <input type="number" id="cfg-rest-time" style="width:80px; margin:0; text-align:center;" value="60">

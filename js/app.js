@@ -21,7 +21,7 @@ const db = getFirestore(app);
 let audioCtx = null;
 let currentUser=null, userData=null, activeWorkout=null, timerInt=null, restTimeRemaining=0, wakeLock=null;
 let chartInstance=null, progressChart=null, fatChartInstance=null, measureChartInstance=null, coachFatChart=null, coachMeasureChart=null, radarChartInstance=null;
-let selectedUserCoach=null, selectedUserObj=null, editingRoutineId=null, coachChart=null, currentPose='front', allRoutinesCache=[], assistantsCache=[];
+let selectedUserCoach=null, selectedUserObj=null, editingRoutineId=null, coachChart=null, currentPose='front', coachCurrentPose='front', allRoutinesCache=[], assistantsCache=[];
 let currentRoutineSelections = [];
 
 // --- SISTEMA DE SONIDO ---
@@ -61,7 +61,6 @@ window.testSound = () => { play5Beeps(); };
 // --- HELPERS EJERCICIOS ---
 function getExerciseData(name) {
     if(!name) return { img: 'logo.png', mInfo: {main:'General', sec:[]}, type:'c' };
-    
     let match = EXERCISES.find(e => e.n === name);
     if (!match) {
         const cleanName = name.toLowerCase().replace(/ de | con | en | el | la /g, " ").trim();
@@ -106,7 +105,6 @@ onAuthStateChanged(auth, async (user) => {
             userData = snap.data();
             checkPhotoReminder();
             
-            // EL COACH TIENE NAV BAR TAMBIÉN, PERO PUEDE IR AL ADMIN PANEL
             if(userData.role === 'admin' || userData.role === 'assistant') {
                 document.getElementById('coach-btn').classList.remove('hidden');
                 document.getElementById('coach-btn').onclick = () => { window.loadAdminUsers(); switchTab('admin-view'); };
@@ -121,6 +119,7 @@ onAuthStateChanged(auth, async (user) => {
                 setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 1500); 
                 document.getElementById('main-header').classList.remove('hidden');
                 document.getElementById('bottom-nav').classList.remove('hidden');
+                
                 loadRoutines();
                 const savedW = localStorage.getItem('fit_active_workout');
                 if(savedW) {
@@ -174,7 +173,6 @@ async function loadRoutines() {
         l.innerHTML = '';
         s.forEach(d=>{
             const r = d.data();
-            // Coach ve las suyas propias + asignadas (como atleta) + todas en admin panel
             if(r.uid===currentUser.uid || userData.role === 'admin' || (r.assignedTo && r.assignedTo.includes(currentUser.uid))){
                 const isMine = r.uid===currentUser.uid;
                 const div = document.createElement('div');
@@ -230,7 +228,6 @@ window.saveRoutine = async () => {
 };
 window.delRoutine = async (id) => { if(confirm("¿Borrar?")) await deleteDoc(doc(db,"routines",id)); };
 
-// --- FOTOS Y SLIDER ---
 window.switchPose = (pose) => { currentPose = pose; document.getElementById('tab-front').classList.toggle('active', pose==='front'); document.getElementById('tab-back').classList.toggle('active', pose==='back'); updatePhotoDisplay(userData); };
 function updatePhotoDisplay(u) {
     const prefix = currentPose === 'front' ? '' : '_back';
@@ -263,11 +260,15 @@ function renderMeasureChart(canvasId, historyData) {
     if(canvasId === 'chartMeasures') measureChartInstance = newChart; else coachMeasureChart = newChart;
 }
 
-// --- PERFIL DE USUARIO ---
+// --- PERFIL DE USUARIO (REORGANIZADO) ---
 window.loadProfile = async () => {
     document.getElementById('profile-name').innerText = userData.name;
     if(userData.photo) { document.getElementById('avatar-text').style.display='none'; document.getElementById('avatar-img').src = userData.photo; document.getElementById('avatar-img').style.display='block'; }
     updatePhotoDisplay(userData);
+    
+    // Configuración Switches
+    document.getElementById('cfg-show-skinfolds').checked = !!userData.showSkinfolds;
+    document.getElementById('cfg-show-measures').checked = !!userData.showMeasurements;
     if(userData.restTime) document.getElementById('cfg-rest-time').value = userData.restTime;
     
     document.getElementById('stat-workouts').innerText = userData.stats.workouts || 0;
@@ -299,7 +300,8 @@ window.loadProfile = async () => {
     if(userData.showMeasurements) {
         document.getElementById('user-measures-section').classList.remove('hidden');
         if(userData.measureHistory && userData.measureHistory.length > 0) renderMeasureChart('chartMeasures', userData.measureHistory);
-    }
+    } else { document.getElementById('user-measures-section').classList.add('hidden'); }
+
     if(userData.showSkinfolds) {
         document.getElementById('user-skinfolds-section').classList.remove('hidden');
         if(userData.skinfoldHistory && userData.skinfoldHistory.length > 0) {
@@ -309,8 +311,8 @@ window.loadProfile = async () => {
             const labels = userData.skinfoldHistory.map(f => new Date(f.date.seconds*1000).toLocaleDateString());
             fatChartInstance = new Chart(ctxF, { type: 'line', data: { labels: labels, datasets: [{ label: '% Grasa', data: dataF, borderColor: '#ffaa00', tension: 0.3 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#333' } }, x: { display: false } }, maintainAspectRatio: false } });
         }
-    }
-    // Heatmap (Muscle series)
+    } else { document.getElementById('user-skinfolds-section').classList.add('hidden'); }
+
     const muscles = ["Pecho","Espalda","Cuádriceps","Isquios","Glúteos","Hombros","Bíceps","Tríceps"];
     const hC = document.getElementById('heatmap-container'); hC.innerHTML = '';
     const mS = userData.muscleStats || {};
@@ -322,6 +324,14 @@ window.loadProfile = async () => {
         hC.appendChild(d);
     });
 }
+
+// --- CONFIGURACIÓN PROPIA (Self Toggles) ---
+window.saveSelfConfig = async (feature, value) => {
+    const update = {}; update[feature] = value;
+    await updateDoc(doc(db, "users", currentUser.uid), update);
+    userData[feature] = value; // Update local state immediately
+    window.loadProfile();
+};
 
 window.saveMeasurements = async () => {
     const data = {
@@ -613,7 +623,7 @@ async function openCoachView(uid,u) {
     const freshU = freshSnap.data();
     selectedUserObj = freshU; 
     switchTab('coach-detail-view');
-    document.getElementById('coach-user-name').innerText=freshU.name + (freshU.role === 'assistant' ? ' (Ayudante)' : '');
+    document.getElementById('coach-user-name').innerText=freshU.name + (freshU.role === 'assistant' ? ' (Coach 🛡️)' : '');
     document.getElementById('coach-user-email').innerText=freshU.email;
     const genderIcon = freshU.gender === 'female' ? '♀️' : '♂️';
     document.getElementById('coach-user-meta').innerText = `${genderIcon} ${freshU.age} años • ${freshU.height} cm`;
@@ -624,18 +634,19 @@ async function openCoachView(uid,u) {
     if(userData.role === 'admin' && freshU.role !== 'admin') {
         let adminActions = `<div style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">`;
         if(freshU.role !== 'assistant') {
-            adminActions += `<button class="btn-small btn-outline" onclick="window.updateUserRole('assistant')">🛡️ Ascender a Ayudante</button>`;
+            adminActions += `<button class="btn-small btn-outline" onclick="window.updateUserRole('assistant')">🛡️ Ascender a Coach</button>`;
         } else {
             adminActions += `<button class="btn-small btn-danger" onclick="window.updateUserRole('athlete')">Bajar a Atleta</button>`;
         }
+        // ASIGNAR A OTRO COACH (Siempre visible si hay coaches)
         if(freshU.role === 'athlete') {
-             if(assistantsCache.length === 0) {
-                 const qAssist = query(collection(db,"users"), where("role", "==", "assistant"));
-                 const snapA = await getDocs(qAssist);
-                 assistantsCache = snapA.docs.map(d=>({id:d.id, name:d.data().name}));
-             }
+             // Forzar carga de assistants
+             const qAssist = query(collection(db,"users"), where("role", "==", "assistant"));
+             const snapA = await getDocs(qAssist);
+             assistantsCache = snapA.docs.map(d=>({id:d.id, name:d.data().name}));
+             
              if(assistantsCache.length > 0) {
-                 let options = `<option value="">-- Asignar a Ayudante --</option>`;
+                 let options = `<option value="">-- Asignar a Coach --</option>`;
                  assistantsCache.forEach(a => options += `<option value="${a.id}">${a.name}</option>`);
                  adminActions += `<div style="margin-top:10px;"><select onchange="window.assignToAssistant(this.value)">${options}</select></div>`;
              }
@@ -709,7 +720,7 @@ async function openCoachView(uid,u) {
                 const detailsStr = d.details ? encodeURIComponent(JSON.stringify(d.details)) : "";
                 const noteStr = d.note ? encodeURIComponent(d.note) : "";
                 const btnVer = d.details ? `<button class="btn-small btn-outline" style="margin:0; padding:2px 6px;" onclick="viewWorkoutDetails('${d.routine}', '${detailsStr}', '${noteStr}')">Ver Detalles</button>` : '';
-                hList.innerHTML += `<div class="history-row" style="grid-template-columns: 60px 1fr 30px 80px;"><div class="hist-date">${date}</div><div class="hist-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${d.routine}</div><div class="hist-rpe">${rpeBadge}</div><div>${btnVer}</div></div>`;
+                hList.innerHTML += `<div class="history-row" style="grid-template-columns: 60px 1fr 30px 40px;"><div class="hist-date">${date}</div><div class="hist-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${d.routine}</div><div class="hist-rpe">${rpeBadge}</div><div>${btnVer}</div></div>`;
             });
         }
     } catch(e) { console.error("Error loading coach details", e); hList.innerHTML='Error cargando datos.'; }
