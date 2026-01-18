@@ -7,15 +7,8 @@
     --safe-top: env(safe-area-inset-top, 20px); --safe-bottom: env(safe-area-inset-bottom, 20px);
     --header-height: 60px;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-body {
-    background-color: var(--bg-color); color: var(--text-color); font-family: var(--font-main);
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%;
-    overflow: hidden; display: flex; flex-direction: column; overscroll-behavior: none;
-}
-
+body { background-color: var(--bg-color); color: var(--text-color); font-family: var(--font-main); position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; display: flex; flex-direction: column; overscroll-behavior: none; }
 .hidden { display: none !important; }
 
 /* UI KIT */
@@ -75,13 +68,10 @@ input:focus { outline: 1px solid var(--accent-color); }
 .fill-primary { background: var(--accent-color); width: 100%; }
 .fill-sec { background: var(--warning-color); width: 50%; }
 
-/* GRID DE SERIES (PREV AJUSTADO A ROJO Y PEQUEÑO) */
 .set-header { display: grid; grid-template-columns: 20px 0.6fr 1fr 1fr 40px; gap: 8px; font-size: 0.7rem; color: #666; margin-bottom: 5px; text-align: center; }
 .set-row { display: grid; grid-template-columns: 20px 0.6fr 1fr 1fr 40px; gap: 8px; align-items: center; margin-bottom: 10px; }
 .set-num { font-size: 0.85rem; color: #666; font-weight: bold; text-align: center; }
 .shadow-val { display: block; font-size: 0.65rem; color: #555; text-align: center; margin-bottom: 2px; }
-
-/* ESTILO PARA DATOS PREVIOS (ROJO, PEQUEÑO, REPS X KG) */
 .prev-data { font-size: 0.65rem; color: #ff5555; background: transparent; border: none; display: flex; align-items: center; justify-content: center; height: 100%; white-space: nowrap; overflow: hidden; font-family: monospace; }
 
 .sets-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 5px; }
@@ -145,7 +135,6 @@ input:checked + .slider { background-color: var(--accent-color); } input:checked
 .note-icon { font-size: 1rem; cursor: pointer; }
 .tip-box { background: rgba(255, 170, 0, 0.15); border: 1px solid var(--warning-color); color: #ffcc80; padding: 10px; border-radius: 8px; font-size: 0.75rem; text-align: center; margin-bottom: 15px; }
 
-/* TABS ADMIN */
 .admin-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
 .admin-tab-btn { flex: 1; background: #222; border: 1px solid #444; color: #888; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; font-size: 0.8rem; }
 .admin-tab-btn.active { background: var(--accent-color); color: white; border-color: var(--accent-color); }
@@ -153,3 +142,7 @@ input:checked + .slider { background-color: var(--accent-color); } input:checked
 .note-display { background: #222; border: 1px solid #444; padding: 10px; border-radius: 8px; margin-bottom: 15px; color: #ddd; font-style: italic; font-size: 0.9rem; }
 
 .link-text { color: #888; font-size: 0.8rem; margin-top: 15px; text-decoration: underline; cursor: pointer; }
+
+/* GRID PARA MEDIDAS */
+.measure-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+.measure-grid input { margin-bottom: 0; text-align: center; }
