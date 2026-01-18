@@ -3,19 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Fit Data">
     <meta name="theme-color" content="#050505">
-
     <title>Fit Data | High Performance</title>
     <link rel="icon" href="favicon.ico">
     <link rel="apple-touch-icon" href="logo.png">
-    
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -159,7 +155,12 @@
             </div>
 
             <div id="user-skinfolds-section" class="card hidden">
-                <h3>🤏 PLIEGUES (% GRASA)</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="margin:0;">🤏 PLIEGUES (% GRASA)</h3>
+                    <button class="btn-small btn-outline" style="width:auto; padding:2px 8px; margin:0;" onclick="window.toggleElement('img-pliegues')">ℹ️ Guía</button>
+                </div>
+                <img id="img-pliegues" src="pliegues.png" class="hidden" style="width:100%; border-radius:8px; margin-bottom:15px; border:1px solid #333;">
+                
                 <div style="height:200px; width:100%; position:relative; margin-bottom:15px;">
                     <canvas id="chartFat"></canvas>
                 </div>
@@ -178,7 +179,12 @@
             </div>
 
             <div id="user-measures-section" class="card hidden">
-                <h3>📏 MEDIDAS (cm)</h3>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 style="margin:0;">📏 MEDIDAS (cm)</h3>
+                    <button class="btn-small btn-outline" style="width:auto; padding:2px 8px; margin:0;" onclick="window.toggleElement('img-medidas')">ℹ️ Guía</button>
+                </div>
+                <img id="img-medidas" src="medidas.png" class="hidden" style="width:100%; border-radius:8px; margin-bottom:15px; border:1px solid #333;">
+
                 <div style="height:250px; width:100%; position:relative; margin-bottom:15px;">
                     <canvas id="chartMeasures"></canvas>
                 </div>
@@ -238,18 +244,15 @@
         <section id="workout-view" class="view-container">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; position:sticky; top:0; background:var(--bg-color); z-index:10; padding:10px 0; border-bottom:1px solid #222;">
                 <button onclick="window.switchTab('routines-view')" style="background:none; border:none; color:#666; font-size:1.5rem;">✕</button>
-                
                 <div style="text-align:center;">
                     <span style="font-size:0.6rem; color:#666;">TIEMPO</span><br>
                     <span id="mini-timer" style="color:var(--accent-color); font-weight:bold;">00:00</span>
                 </div>
-                
                 <div style="display:flex; gap:10px; align-items:center;">
                     <button class="btn-danger btn-small" style="margin:0; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px;" onclick="window.cancelWorkout()">🗑️</button>
                     <button class="btn-small btn" style="margin:0;" onclick="window.promptRPE()">TERMINAR</button>
                 </div>
             </div>
-            
             <h2 id="workout-title" style="margin-bottom:20px;">Entreno</h2>
             <div id="workout-exercises"></div>
         </section>

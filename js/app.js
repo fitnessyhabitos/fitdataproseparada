@@ -1,14 +1,16 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, query, where, addDoc, deleteDoc, getDocs, serverTimestamp, increment, orderBy, limit, arrayRemove, arrayUnion } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+// NUEVO: LIBRERÍAS DE STORAGE
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-// --- CONFIGURACIÓN FIREBASE ---
+// --- CONFIGURACIÓN FIREBASE (CON STORAGE) ---
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
   authDomain: "fitdatatg.firebaseapp.com",
   projectId: "fitdatatg",
-  storageBucket: "fitdatatg.firebasestorage.app",
+  storageBucket: "fitdatatg.firebasestorage.app", // TU BUCKET DE STORAGE
   messagingSenderId: "1019606805247",
   appId: "1:1019606805247:web:3a3e5c0db061aa62773aca"
 };
@@ -16,17 +18,24 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app); // INICIALIZAR STORAGE
 
 // ESTADO GLOBAL
 let audioCtx = null;
 let currentUser=null, userData=null, activeWorkout=null, timerInt=null, restTimeRemaining=0, wakeLock=null;
 let chartInstance=null, progressChart=null, fatChartInstance=null, measureChartInstance=null, coachFatChart=null, coachMeasureChart=null, radarChartInstance=null;
-let selectedUserCoach=null, selectedUserObj=null, editingRoutineId=null, coachChart=null, currentPose='front', allRoutinesCache=[], assistantsCache=[];
+let selectedUserCoach=null, selectedUserObj=null, editingRoutineId=null, coachChart=null, currentPose='front', coachCurrentPose='front', allRoutinesCache=[], assistantsCache=[];
 let currentRoutineSelections = [];
 
-// --- HELPER: NORMALIZAR TEXTO (TILDES) ---
+// --- HELPER: NORMALIZAR TEXTO ---
 const normalizeText = (text) => {
     return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+};
+
+// --- HELPER: TOGGLE INFO ---
+window.toggleElement = (id) => {
+    const el = document.getElementById(id);
+    if(el) el.classList.toggle('hidden');
 };
 
 // --- SISTEMA DE SONIDO ---
@@ -67,16 +76,11 @@ window.testSound = () => { play5Beeps(); };
 function getExerciseData(name) {
     if(!name) return { img: 'logo.png', mInfo: {main:'General', sec:[]}, type:'c' };
     
-    // 1. Intentar búsqueda exacta
     let match = EXERCISES.find(e => e.n === name);
-    
-    // 2. Intentar búsqueda normalizada (sin tildes)
     if (!match) {
-        const cleanInput = normalizeText(name);
-        match = EXERCISES.find(e => normalizeText(e.n) === cleanInput);
+        const cleanName = normalizeText(name);
+        match = EXERCISES.find(e => normalizeText(e.n) === cleanName);
     }
-
-    // 3. Intentar búsqueda flexible (palabras clave)
     if (!match) {
         const cleanName = normalizeText(name);
         match = EXERCISES.find(e => {
@@ -84,9 +88,7 @@ function getExerciseData(name) {
             return cleanDbName.includes(cleanName) || cleanName.includes(cleanDbName);
         });
     }
-    
     if (!match) {
-        // Fallback por grupo muscular si no se encuentra el nombre
         const n = normalizeText(name);
         let m = "General", img = "logo.png";
         if(n.includes("press")||n.includes("pecho")||n.includes("aperturas")) { m="Pecho"; img="pecho.png"; }
@@ -257,11 +259,90 @@ function updatePhotoDisplay(u) {
     document.getElementById('date-before').innerText = `ANTES (${dateB})`; document.getElementById('date-after').innerText = `AHORA (${dateA})`;
     document.getElementById('slider-handle').style.left = '0%'; document.getElementById('img-overlay').style.clipPath = 'inset(0 0 0 0)';
 }
-window.loadCompImg = (inp, field) => { if(inp.files[0]) { const r = new FileReader(); r.onload = (e) => { const img = new Image(); img.src = e.target.result; img.onload = async () => { const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d'); const scale = 600 / img.width; canvas.width = 600; canvas.height = img.height * scale; ctx.drawImage(img, 0, 0, canvas.width, canvas.height); const dataUrl = canvas.toDataURL('image/jpeg', 0.7); const prefix = currentPose === 'front' ? '' : '_back'; const fieldName = field === 'before' ? `photoBefore${prefix}` : `photoAfter${prefix}`; const dateField = field === 'before' ? `dateBefore${prefix}` : `dateAfter${prefix}`; const today = new Date().toLocaleDateString(); let update = {}; update[fieldName] = dataUrl; update[dateField] = today; await updateDoc(doc(db, "users", currentUser.uid), update); userData[fieldName] = dataUrl; userData[dateField] = today; updatePhotoDisplay(userData); }; }; r.readAsDataURL(inp.files[0]); } };
+
+// --- SUBIDA A FIREBASE STORAGE (AVATAR) ---
+window.uploadAvatar = (inp) => { 
+    if(inp.files[0]) { 
+        const file = inp.files[0];
+        const path = `users/${currentUser.uid}/avatar.jpg`; // Sobrescribir para ahorrar espacio
+        const storageRef = ref(storage, path);
+        
+        // No comprimimos avatar, suele ser pequeño. Si quisieras, usa el método canvas de abajo.
+        uploadBytes(storageRef, file).then(async (snapshot) => {
+            const url = await getDownloadURL(snapshot.ref);
+            // Truco: Añadimos ?t=timestamp para evitar cache del navegador al cambiar foto
+            const urlWithTime = `${url}?t=${Date.now()}`;
+            await updateDoc(doc(db,"users",currentUser.uid), {photo: url}); // Guardamos URL limpia
+            userData.photo = url; // Actualizamos local
+            window.loadProfile();
+        }).catch(e => alert("Error subiendo foto: " + e.message));
+    } 
+};
+
+// --- SUBIDA A FIREBASE STORAGE (FOTOS PROGRESO COMPRIMIDAS) ---
+window.loadCompImg = (inp, field) => { 
+    if(inp.files[0]) { 
+        const file = inp.files[0];
+        const r = new FileReader(); 
+        r.onload = (e) => { 
+            const img = new Image(); 
+            img.src = e.target.result; 
+            img.onload = async () => { 
+                const canvas = document.createElement('canvas'); 
+                const ctx = canvas.getContext('2d'); 
+                // Redimensionar a 800px ancho (suficiente para móvil)
+                const scale = 800 / img.width; 
+                canvas.width = 800; 
+                canvas.height = img.height * scale; 
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
+                
+                // Convertir a BLOB JPG 80% calidad
+                canvas.toBlob(async (blob) => {
+                    const prefix = currentPose === 'front' ? 'front' : 'back';
+                    const timestamp = Date.now();
+                    const path = `users/${currentUser.uid}/progress/${timestamp}_${prefix}.jpg`;
+                    const storageRef = ref(storage, path);
+                    
+                    try {
+                        // 1. Subir a Storage
+                        await uploadBytes(storageRef, blob);
+                        const url = await getDownloadURL(storageRef);
+                        
+                        // 2. Guardar URL en Firestore
+                        const fieldPrefix = currentPose === 'front' ? '' : '_back';
+                        const fieldName = field === 'before' ? `photoBefore${fieldPrefix}` : `photoAfter${fieldPrefix}`; 
+                        const dateField = field === 'before' ? `dateBefore${fieldPrefix}` : `dateAfter${fieldPrefix}`; 
+                        const today = new Date().toLocaleDateString(); 
+                        
+                        const record = { date: today, url: url };
+                        let update = {}; 
+                        update[fieldName] = url; 
+                        update[dateField] = today;
+                        const histField = fieldPrefix === '' ? 'photoHistoryFront' : 'photoHistoryBack';
+                        update[histField] = arrayUnion(record);
+
+                        await updateDoc(doc(db, "users", currentUser.uid), update); 
+                        userData[fieldName] = url; 
+                        userData[dateField] = today; 
+                        // Actualizar array local para que se vea al momento si abres coach view
+                        if(!userData[histField]) userData[histField] = [];
+                        userData[histField].push(record);
+                        
+                        updatePhotoDisplay(userData);
+                    } catch(err) {
+                        alert("Error subiendo imagen: " + err.message);
+                    }
+                }, 'image/jpeg', 0.8);
+            }; 
+        }; 
+        r.readAsDataURL(file); 
+    } 
+};
+
 window.deletePhoto = async (type) => { if(!confirm("¿Borrar?")) return; const prefix = currentPose === 'front' ? '' : '_back'; const f = type === 'before' ? `photoBefore${prefix}` : `photoAfter${prefix}`; let u={}; u[f]=""; await updateDoc(doc(db,"users",currentUser.uid),u); userData[f]=""; updatePhotoDisplay(userData); }
 window.moveSlider = (v) => { document.getElementById('img-overlay').style.clipPath = `inset(0 0 0 ${v}%)`; document.getElementById('slider-handle').style.left = `${v}%`; };
 
-// --- FOTOS COACH (FIXED) ---
+// --- FOTOS COACH ---
 window.switchCoachPose = (pose) => {
     coachCurrentPose = pose;
     document.getElementById('coach-tab-front').classList.toggle('active', pose==='front');
@@ -273,29 +354,56 @@ function updateCoachPhotoDisplay(pose) {
     const u = selectedUserObj;
     if(!u) return;
     const prefix = pose === 'front' ? '' : '_back';
-    const b = u[`photoBefore${prefix}`] || '';
-    const a = u[`photoAfter${prefix}`] || '';
-    const dateB = u[`dateBefore${prefix}`] || '-';
-    const dateA = u[`dateAfter${prefix}`] || '-';
-    
-    // Aquí inyectamos el HTML con estilos explícitos de altura para que se vea
+    const histField = prefix === '' ? 'photoHistoryFront' : 'photoHistoryBack';
+    const history = u[histField] || [];
+
     const pCont = document.getElementById('coach-photos-container');
+    
     pCont.innerHTML = `
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+             <select id="c-sel-before" onchange="window.updateCoachSliderImages()" style="margin:0; font-size:0.8rem;"></select>
+             <select id="c-sel-after" onchange="window.updateCoachSliderImages()" style="margin:0; font-size:0.8rem;"></select>
+        </div>
         <div class="compare-wrapper" style="min-height:250px; background:#000; position:relative;">
             <div class="slider-labels"><span class="label-tag">ANTES</span><span class="label-tag">AHORA</span></div>
-            <img src="${b}" class="compare-img" style="display:${b ? 'block' : 'none'}; width:100%; height:100%; object-fit:contain;">
-            <img src="${a}" id="coach-overlay-img" class="compare-img img-overlay" style="clip-path:inset(0 0 0 0); display:${a ? 'block' : 'none'}; width:100%; height:100%; object-fit:contain;">
+            <img src="" id="c-img-before" class="compare-img" style="width:100%; height:100%; object-fit:contain;">
+            <img src="" id="c-img-after" class="compare-img img-overlay" style="clip-path:inset(0 0 0 0); width:100%; height:100%; object-fit:contain;">
             <div class="slider-handle" id="coach-slider-handle" style="left:0%"><div class="slider-btn"></div></div>
         </div>
         <input type="range" min="0" max="100" value="0" style="width:100%; margin-top:15px;" oninput="window.moveCoachSlider(this.value)">
     `;
     
-    document.getElementById('coach-date-before').innerText = `ANTES (${dateB})`;
-    document.getElementById('coach-date-after').innerText = `AHORA (${dateA})`;
+    const selB = document.getElementById('c-sel-before');
+    const selA = document.getElementById('c-sel-after');
+    
+    if(history.length === 0) {
+        const current = u[`photoBefore${prefix}`];
+        const opt = new Option(current ? "Actual" : "Sin fotos", current || "");
+        selB.add(opt); selA.add(opt.cloneNode(true));
+    } else {
+        history.forEach((h, i) => {
+            const label = h.date || `Foto ${i+1}`;
+            selB.add(new Option(label, h.url));
+            selA.add(new Option(label, h.url));
+        });
+        selB.selectedIndex = 0;
+        selA.selectedIndex = history.length - 1;
+    }
+    
+    window.updateCoachSliderImages();
 }
 
+window.updateCoachSliderImages = () => {
+    const urlB = document.getElementById('c-sel-before').value;
+    const urlA = document.getElementById('c-sel-after').value;
+    const imgB = document.getElementById('c-img-before');
+    const imgA = document.getElementById('c-img-after');
+    if(imgB) imgB.src = urlB;
+    if(imgA) imgA.src = urlA;
+};
+
 window.moveCoachSlider = (v) => {
-    const overlay = document.getElementById('coach-overlay-img');
+    const overlay = document.getElementById('c-img-after');
     const handle = document.getElementById('coach-slider-handle');
     if(overlay) overlay.style.clipPath = `inset(0 0 0 ${v}%)`;
     if(handle) handle.style.left = `${v}%`;
@@ -325,7 +433,6 @@ window.loadProfile = async () => {
     if(userData.photo) { document.getElementById('avatar-text').style.display='none'; document.getElementById('avatar-img').src = userData.photo; document.getElementById('avatar-img').style.display='block'; }
     updatePhotoDisplay(userData);
     
-    // TE ACTIVAS TUS PROPIOS CHECKBOX
     document.getElementById('cfg-show-skinfolds').checked = !!userData.showSkinfolds;
     document.getElementById('cfg-show-measures').checked = !!userData.showMeasurements;
     if(userData.restTime) document.getElementById('cfg-rest-time').value = userData.restTime;
@@ -435,7 +542,6 @@ window.savePhotoReminder = async () => {
     userData.photoDay = d; userData.photoTime = t;
     alert("Alarma Guardada");
 };
-window.uploadAvatar = (inp) => { if(inp.files[0]) { const r = new FileReader(); r.onload=async(e)=>{ await updateDoc(doc(db,"users",currentUser.uid), {photo:e.target.result}); window.loadProfile(); }; r.readAsDataURL(inp.files[0]); } };
 
 window.addWeightEntry = async () => { 
     const wStr = prompt("Introduce tu peso (kg):");
@@ -676,39 +782,6 @@ window.assignToAssistant = async (assistantId) => {
     alert("Atleta reasignado"); openCoachView(selectedUserCoach, selectedUserObj);
 };
 
-// --- FUNCIÓN IR A CREAR RUTINA (FIXED) ---
-window.goToCreateRoutine = () => {
-    window.switchTab('routines-view');
-    window.openEditor();
-};
-
-// --- FUNCIÓN ASIGNAR RUTINA (FIXED) ---
-window.assignRoutine = async () => {
-    const select = document.getElementById('coach-routine-select');
-    const rid = select.value;
-    
-    if(!rid || rid === "" || rid === "Cargando...") {
-        return alert("❌ Por favor selecciona una rutina válida.");
-    }
-    if(!selectedUserCoach) return alert("❌ No hay usuario seleccionado.");
-
-    try {
-        const rRef = doc(db, "routines", rid); 
-        await updateDoc(rRef, { assignedTo: arrayUnion(selectedUserCoach) }); 
-        alert("✅ Rutina Asignada Correctamente");
-        openCoachView(selectedUserCoach, selectedUserObj); 
-    } catch(e) {
-        alert("Error asignando: " + e.message);
-    }
-};
-
-window.unassignRoutine = async (rid) => {
-    if(confirm("¿Quitar esta rutina al atleta?")) {
-        await updateDoc(doc(db, "routines", rid), { assignedTo: arrayRemove(selectedUserCoach) });
-        openCoachView(selectedUserCoach, selectedUserObj); 
-    }
-};
-
 async function openCoachView(uid,u) {
     selectedUserCoach=uid;
     const freshSnap = await getDoc(doc(db, "users", uid));
@@ -723,7 +796,6 @@ async function openCoachView(uid,u) {
     const banner = document.getElementById('pending-approval-banner');
     if(!freshU.approved) { banner.classList.remove('hidden'); } else { banner.classList.add('hidden'); }
 
-    // GESTIÓN DE STAFF
     if(userData.role === 'admin' && freshU.role !== 'admin') {
         let adminActions = `<div style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">`;
         if(freshU.role !== 'assistant') {
@@ -731,8 +803,6 @@ async function openCoachView(uid,u) {
         } else {
             adminActions += `<button class="btn-small btn-danger" onclick="window.updateUserRole('athlete')">Bajar a Atleta</button>`;
         }
-        
-        // Carga forzada de ayudantes (siempre visible si eres admin)
         if(freshU.role === 'athlete') {
              const qAssist = query(collection(db,"users"), where("role", "==", "assistant"));
              const snapA = await getDocs(qAssist);
@@ -757,7 +827,6 @@ async function openCoachView(uid,u) {
     const pCard = document.getElementById('coach-view-skinfolds');
     const mCard = document.getElementById('coach-view-measures');
     
-    // VISUALIZACIÓN DE MEDIDAS (FIXED: Se muestra si hay datos, aunque esté apagado el toggle)
     if(freshU.skinfoldHistory && freshU.skinfoldHistory.length > 0) {
         pCard.classList.remove('hidden');
         if(coachFatChart) coachFatChart.destroy();
@@ -772,31 +841,18 @@ async function openCoachView(uid,u) {
         renderMeasureChart('coachMeasuresChart', freshU.measureHistory);
     } else { mCard.classList.add('hidden'); }
 
-    // CARGA DE RUTINAS (FIXED: Await para evitar bloqueo)
     try {
-        const s = document.getElementById('coach-routine-select'); 
-        s.innerHTML = '<option>Cargando...</option>';
-        
+        const s = document.getElementById('coach-routine-select'); s.innerHTML = '<option>Cargando...</option>';
         const allRoutinesSnap = await getDocs(collection(db, "routines"));
         allRoutinesCache = [];
-        s.innerHTML = '<option value="">Selecciona rutina...</option>'; // Opción por defecto
-        
+        s.innerHTML = '<option value="">Selecciona rutina...</option>';
         allRoutinesSnap.forEach(r => {
-            const data = r.data(); 
-            allRoutinesCache.push({id: r.id, ...data});
-            const o = document.createElement('option'); 
-            o.value = r.id; 
-            o.innerText = data.name; 
-            s.appendChild(o); 
+            const data = r.data(); allRoutinesCache.push({id: r.id, ...data});
+            const o = document.createElement('option'); o.value = r.id; o.innerText = data.name; s.appendChild(o); 
         });
-
-        const rList = document.getElementById('coach-assigned-list'); 
-        rList.innerHTML = '';
+        const rList = document.getElementById('coach-assigned-list'); rList.innerHTML = '';
         const assignedRoutines = allRoutinesCache.filter(r => r.assignedTo && r.assignedTo.includes(uid));
-        
-        if(assignedRoutines.length === 0) { 
-            rList.innerHTML = 'Ninguna rutina asignada.'; 
-        } else {
+        if(assignedRoutines.length === 0) { rList.innerHTML = 'Ninguna rutina asignada.'; } else {
             assignedRoutines.forEach(r => {
                 const div = document.createElement('div'); div.className = "assigned-routine-item";
                 div.innerHTML = `<span>${r.name}</span><button style="background:none;border:none;color:#f55;font-weight:bold;cursor:pointer;" onclick="unassignRoutine('${r.id}')">❌</button>`;
