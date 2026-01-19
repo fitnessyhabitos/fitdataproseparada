@@ -8,10 +8,13 @@
     <meta name="apple-mobile-web-app-title" content="Fit Data">
     <meta name="theme-color" content="#050505">
     <title>Fit Data | High Performance</title>
+    
     <link rel="icon" href="favicon.ico">
     <link rel="apple-touch-icon" href="logo.png">
+    
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -26,18 +29,20 @@
             <img src="logo.png" class="header-logo" onerror="this.style.display='none'">
             <div>FIT DATA <span>PRO</span></div>
         </div>
-        <div style="display:flex; align-items:center;">
+        <div style="display:flex; align-items:center; gap: 10px;">
             <div id="notif-badge" class="notif-badge" onclick="window.dismissNotif()">🔔</div>
             <button id="coach-btn" class="hidden btn-neon-text">COACH</button>
         </div>
     </header>
 
     <main id="main-container">
+        
         <section id="auth-view" class="view-container">
             <div style="text-align:center; margin: 50px 0;">
                 <img src="logo.png" style="width:110px; border-radius:20px; margin-bottom:15px;" onerror="this.src='https://placehold.co/100x100?text=FD'">
                 <h1>ACCESO</h1>
             </div>
+            
             <div id="login-form">
                 <input type="email" id="login-email" placeholder="Email">
                 <input type="password" id="login-pass" placeholder="Contraseña">
@@ -45,6 +50,7 @@
                 <div class="link-text" onclick="window.recoverPass()">¿Olvidaste tu contraseña?</div>
                 <button class="btn-outline" onclick="window.toggleAuth('register')" style="margin-top:30px;">CREAR CUENTA</button>
             </div>
+
             <div id="register-form" class="hidden">
                 <input type="text" id="reg-name" placeholder="Nombre">
                 <input type="email" id="reg-email" placeholder="Email">
@@ -102,6 +108,7 @@
             <div class="card">
                 <h3>HISTORIAL RECIENTE</h3>
                 <div id="user-history-list" style="font-size:0.8rem; color:#888;">Cargando...</div>
+                <button class="btn-outline" style="border-color:var(--success-color); color:var(--success-color); margin-top:15px;" onclick="window.openProgress()">📈 EVOLUCIÓN DETALLADA</button>
             </div>
 
             <div class="card">
@@ -148,8 +155,8 @@
 
             <div class="card">
                 <h3>PESO CORPORAL</h3>
-                <div style="height:200px; position:relative;"><canvas id="weightChart"></canvas></div>
-                <button class="btn-outline" onclick="window.addWeightEntry()">+ REGISTRAR HOY</button>
+                <div style="height:200px; position:relative; margin-bottom:10px;"><canvas id="weightChart"></canvas></div>
+                <button class="btn-outline" onclick="window.addWeightEntry()">+ REGISTRAR PESO</button>
             </div>
 
             <div id="user-skinfolds-section" class="card hidden">
@@ -211,12 +218,10 @@
                      <span>Tiempo Descanso (s)</span>
                      <input type="number" id="cfg-rest-time" style="width:80px; margin:0; text-align:center;" value="60">
                 </div>
-                
                 <div style="margin-bottom:15px; padding-top:10px; border-top:1px solid #333;">
                     <button class="btn-small btn-outline" style="width:100%; border-color:#444;" onclick="window.enableNotifications()">⌚ VINCULAR NOTIFICACIONES</button>
                     <p style="font-size:0.65rem; color:#666; text-align:center; margin-top:5px;">Para que vibre el reloj al acabar el descanso</p>
                 </div>
-
                 <div style="margin-bottom:15px;">
                     <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">Recordatorio Fotos:</div>
                     <div style="display:flex; gap:10px;">
@@ -304,9 +309,13 @@
                     <span>Habilitar Pliegues</span>
                     <label class="switch"><input type="checkbox" id="coach-toggle-skinfolds" onchange="window.toggleUserFeature('showSkinfolds', this.checked)"><span class="slider"></span></label>
                 </div>
-                <div style="display:flex; justify-content:space-between;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                     <span>Habilitar Medidas</span>
                     <label class="switch"><input type="checkbox" id="coach-toggle-measures" onchange="window.toggleUserFeature('showMeasurements', this.checked)"><span class="slider"></span></label>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                    <span>Habilitar Vídeos (YouTube)</span>
+                    <label class="switch"><input type="checkbox" id="coach-toggle-videos" onchange="window.toggleUserFeature('showVideos', this.checked)"><span class="slider"></span></label>
                 </div>
             </div>
 
@@ -405,6 +414,26 @@
             <h3 id="detail-title" style="color:var(--accent-color); text-align:center; margin-bottom:15px;">DETALLES</h3>
             <div id="detail-content" style="font-size:0.85rem; max-height:60vh; overflow-y:auto;"></div>
             <button class="btn-outline" style="margin-top:15px;" onclick="document.getElementById('modal-details').classList.remove('active')">CERRAR</button>
+        </div>
+    </div>
+
+    <div id="modal-progress" class="modal">
+        <div class="modal-content">
+            <h3>📈 EVOLUCIÓN DETALLADA</h3>
+            <select id="progress-select" onchange="window.renderProgressChart(this.value)" style="margin-bottom:20px;"></select>
+            <div style="height:250px; width:100%; position:relative;">
+                <canvas id="progressChart"></canvas>
+            </div>
+            <button class="btn-outline" style="margin-top:20px;" onclick="document.getElementById('modal-progress').classList.remove('active')">CERRAR</button>
+        </div>
+    </div>
+
+    <div id="modal-video" class="modal" style="z-index: 3000;">
+        <div class="modal-content" style="width:100%; max-width:600px; padding:10px; background:black;">
+            <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden;">
+                <iframe id="youtube-frame" style="position:absolute; top:0; left:0; width:100%; height:100%;" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen playsinline></iframe>
+            </div>
+            <button class="btn-danger" style="margin-top:10px; width:100%;" onclick="window.closeVideo()">CERRAR VÍDEO</button>
         </div>
     </div>
 
