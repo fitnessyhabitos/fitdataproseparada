@@ -1,18 +1,17 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, query, where, addDoc, deleteDoc, getDocs, serverTimestamp, increment, orderBy, limit, arrayRemove, arrayUnion } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-// IMPORTACIONES DE STORAGE (PLAN BLAZE ACTIVADO)
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App vFinal (Blaze)...");
+console.log("⚡ FIT DATA: Iniciando App v4.0 (Tiempo Real + Notificaciones)...");
 
 // --- CONFIGURACIÓN FIREBASE ---
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
   authDomain: "fitdatatg.firebaseapp.com",
   projectId: "fitdatatg",
-  storageBucket: "fitdatatg.firebasestorage.app", // Correcto para Blaze
+  storageBucket: "fitdatatg.firebasestorage.app",
   messagingSenderId: "1019606805247",
   appId: "1:1019606805247:web:3a3e5c0db061aa62773aca"
 };
@@ -20,11 +19,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app); // Inicializamos Storage
+const storage = getStorage(app);
 
 // ESTADO GLOBAL
 let audioCtx = null;
-let currentUser=null, userData=null, activeWorkout=null, timerInt=null, restTimeRemaining=0, wakeLock=null;
+let currentUser=null, userData=null, activeWorkout=null, timerInt=null, restEndTime=0, wakeLock=null;
 let chartInstance=null, progressChart=null, fatChartInstance=null, measureChartInstance=null, coachFatChart=null, coachMeasureChart=null, radarChartInstance=null;
 let selectedUserCoach=null, selectedUserObj=null, editingRoutineId=null, coachChart=null, currentPose='front', coachCurrentPose='front', allRoutinesCache=[], assistantsCache=[];
 let currentRoutineSelections = [];
@@ -35,13 +34,12 @@ const normalizeText = (text) => {
     return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 };
 
-// --- HELPER: TOGGLE INFO ---
 window.toggleElement = (id) => {
     const el = document.getElementById(id);
     if(el) el.classList.toggle('hidden');
 };
 
-// --- SISTEMA DE SONIDO ---
+// --- SONIDO Y NOTIFICACIONES ---
 function unlockAudio() {
     if(!audioCtx) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -75,48 +73,20 @@ function play5Beeps() {
 }
 window.testSound = () => { play5Beeps(); };
 
-// --- HELPERS EJERCICIOS ---
-function getExerciseData(name) {
-    if(!name) return { img: 'logo.png', mInfo: {main:'General', sec:[]}, type:'c' };
-    
-    let match = EXERCISES.find(e => e.n === name);
-    if (!match) {
-        const cleanName = normalizeText(name);
-        match = EXERCISES.find(e => normalizeText(e.n) === cleanName);
+window.enableNotifications = () => {
+    if (!("Notification" in window)) {
+        alert("Tu dispositivo no soporta notificaciones web.");
+        return;
     }
-    if (!match) {
-        const cleanName = normalizeText(name);
-        match = EXERCISES.find(e => {
-            const cleanDbName = normalizeText(e.n);
-            return cleanDbName.includes(cleanName) || cleanName.includes(cleanDbName);
-        });
-    }
-    if (!match) {
-        const n = normalizeText(name);
-        let m = "General", img = "logo.png";
-        if(n.includes("press")||n.includes("pecho")||n.includes("aperturas")) { m="Pecho"; img="pecho.png"; }
-        else if(n.includes("remo")||n.includes("jalon")||n.includes("espalda")||n.includes("dominadas")) { m="Espalda"; img="espalda.png"; }
-        else if(n.includes("sentadilla")||n.includes("prensa")||n.includes("extension")||n.includes("zancada")) { m="Cuádriceps"; img="cuadriceps.png"; }
-        else if(n.includes("curl")||n.includes("biceps")) { m="Bíceps"; img="biceps.png"; }
-        else if(n.includes("triceps")||n.includes("frances")||n.includes("fondos")) { m="Tríceps"; img="triceps.png"; }
-        else if(n.includes("hombro")||n.includes("militar")||n.includes("elevacion")||n.includes("pajaros")) { m="Hombros"; img="hombros.png"; }
-        return { img: img, mInfo: getMuscleInfoByGroup(m), type:'c' };
-    }
-    return { img: match.img, mInfo: getMuscleInfoByGroup(match.m), type: match.t || 'c' };
-}
-
-function getMuscleInfoByGroup(m) {
-    let s = [];
-    if(m==="Pecho") s=["Tríceps","Hombros"]; 
-    else if(m==="Espalda") s=["Bíceps", "Antebrazo"]; 
-    else if(m==="Cuádriceps") s=["Glúteos", "Gemelos"]; 
-    else if(m==="Isquios") s=["Glúteos", "Espalda Baja"];
-    else if(m==="Hombros") s=["Tríceps", "Trapecio"]; 
-    else if(m==="Bíceps") s=["Antebrazo"];
-    else if(m==="Tríceps") s=["Hombros", "Pecho"];
-    else if(m==="Glúteos") s=["Isquios", "Cuádriceps"];
-    return {main:m, sec:s};
-}
+    Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+            alert("✅ Vinculado. El reloj vibrará al acabar.");
+            new Notification("Fit Data", { body: "Prueba de conexión exitosa.", icon: "logo.png" });
+        } else {
+            alert("❌ Permiso denegado. Revisa la configuración.");
+        }
+    });
+};
 
 // --- AUTH OBSERVER ---
 onAuthStateChanged(auth, async (user) => {
@@ -186,6 +156,48 @@ window.recoverPass = async () => {
     }
 };
 window.dismissNotif = () => { document.getElementById('notif-badge').style.display = 'none'; switchTab('routines-view'); sessionStorage.setItem('notif_dismissed', 'true'); };
+
+// --- HELPERS EJERCICIOS ---
+function getExerciseData(name) {
+    if(!name) return { img: 'logo.png', mInfo: {main:'General', sec:[]}, type:'c' };
+    let match = EXERCISES.find(e => e.n === name);
+    if (!match) {
+        const cleanName = normalizeText(name);
+        match = EXERCISES.find(e => normalizeText(e.n) === cleanName);
+    }
+    if (!match) {
+        const cleanName = normalizeText(name);
+        match = EXERCISES.find(e => {
+            const cleanDbName = normalizeText(e.n);
+            return cleanDbName.includes(cleanName) || cleanName.includes(cleanDbName);
+        });
+    }
+    if (!match) {
+        const n = normalizeText(name);
+        let m = "General", img = "logo.png";
+        if(n.includes("press")||n.includes("pecho")||n.includes("aperturas")) { m="Pecho"; img="pecho.png"; }
+        else if(n.includes("remo")||n.includes("jalon")||n.includes("espalda")||n.includes("dominadas")) { m="Espalda"; img="espalda.png"; }
+        else if(n.includes("sentadilla")||n.includes("prensa")||n.includes("extension")||n.includes("zancada")) { m="Cuádriceps"; img="cuadriceps.png"; }
+        else if(n.includes("curl")||n.includes("biceps")) { m="Bíceps"; img="biceps.png"; }
+        else if(n.includes("triceps")||n.includes("frances")||n.includes("fondos")) { m="Tríceps"; img="triceps.png"; }
+        else if(n.includes("hombro")||n.includes("militar")||n.includes("elevacion")||n.includes("pajaros")) { m="Hombros"; img="hombros.png"; }
+        return { img: img, mInfo: getMuscleInfoByGroup(m), type:'c' };
+    }
+    return { img: match.img, mInfo: getMuscleInfoByGroup(match.m), type: match.t || 'c' };
+}
+
+function getMuscleInfoByGroup(m) {
+    let s = [];
+    if(m==="Pecho") s=["Tríceps","Hombros"]; 
+    else if(m==="Espalda") s=["Bíceps", "Antebrazo"]; 
+    else if(m==="Cuádriceps") s=["Glúteos", "Gemelos"]; 
+    else if(m==="Isquios") s=["Glúteos", "Espalda Baja"];
+    else if(m==="Hombros") s=["Tríceps", "Trapecio"]; 
+    else if(m==="Bíceps") s=["Antebrazo"];
+    else if(m==="Tríceps") s=["Hombros", "Pecho"];
+    else if(m==="Glúteos") s=["Isquios", "Cuádriceps"];
+    return {main:m, sec:s};
+}
 
 // --- RUTINAS ---
 async function loadRoutines() {
@@ -263,7 +275,7 @@ function updatePhotoDisplay(u) {
     document.getElementById('slider-handle').style.left = '0%'; document.getElementById('img-overlay').style.clipPath = 'inset(0 0 0 0)';
 }
 
-// --- SUBIDA A STORAGE (AVATAR) ---
+// --- SUBIDA STORAGE (FOTOS) ---
 window.uploadAvatar = (inp) => { 
     if(inp.files[0]) { 
         const file = inp.files[0];
@@ -279,7 +291,6 @@ window.uploadAvatar = (inp) => {
     } 
 };
 
-// --- SUBIDA A STORAGE (PROGRESO) ---
 window.loadCompImg = (inp, field) => { 
     if(inp.files[0]) { 
         const file = inp.files[0];
@@ -300,26 +311,20 @@ window.loadCompImg = (inp, field) => {
                     const timestamp = Date.now();
                     const path = `users/${currentUser.uid}/progress/${timestamp}_${prefix}.jpg`;
                     const storageRef = ref(storage, path);
-                    
                     try {
                         await uploadBytes(storageRef, blob);
                         const url = await getDownloadURL(storageRef);
-                        
                         const fieldPrefix = currentPose === 'front' ? '' : '_back';
                         const fieldName = field === 'before' ? `photoBefore${fieldPrefix}` : `photoAfter${fieldPrefix}`; 
                         const dateField = field === 'before' ? `dateBefore${fieldPrefix}` : `dateAfter${fieldPrefix}`; 
                         const today = new Date().toLocaleDateString(); 
-                        
                         const record = { date: today, url: url };
                         let update = {}; 
-                        update[fieldName] = url; 
-                        update[dateField] = today;
+                        update[fieldName] = url; update[dateField] = today;
                         const histField = fieldPrefix === '' ? 'photoHistoryFront' : 'photoHistoryBack';
                         update[histField] = arrayUnion(record);
-
                         await updateDoc(doc(db, "users", currentUser.uid), update); 
-                        userData[fieldName] = url; 
-                        userData[dateField] = today; 
+                        userData[fieldName] = url; userData[dateField] = today; 
                         if(!userData[histField]) userData[histField] = [];
                         userData[histField].push(record);
                         updatePhotoDisplay(userData);
@@ -350,7 +355,6 @@ function updateCoachPhotoDisplay(pose) {
     const history = u[histField] || [];
 
     const pCont = document.getElementById('coach-photos-container');
-    
     pCont.innerHTML = `
         <div style="display:flex; gap:5px; margin-bottom:10px;">
              <select id="c-sel-before" onchange="window.updateCoachSliderImages()" style="margin:0; font-size:0.8rem;"></select>
@@ -364,10 +368,8 @@ function updateCoachPhotoDisplay(pose) {
         </div>
         <input type="range" min="0" max="100" value="0" style="width:100%; margin-top:15px;" oninput="window.moveCoachSlider(this.value)">
     `;
-    
     const selB = document.getElementById('c-sel-before');
     const selA = document.getElementById('c-sel-after');
-    
     if(history.length === 0) {
         const current = u[`photoBefore${prefix}`];
         const opt = new Option(current ? "Actual" : "Sin fotos", current || "");
@@ -381,7 +383,6 @@ function updateCoachPhotoDisplay(pose) {
         selB.selectedIndex = 0;
         selA.selectedIndex = history.length - 1;
     }
-    
     window.updateCoachSliderImages();
 }
 
@@ -425,7 +426,6 @@ window.loadProfile = async () => {
     if(userData.photo) { document.getElementById('avatar-text').style.display='none'; document.getElementById('avatar-img').src = userData.photo; document.getElementById('avatar-img').style.display='block'; }
     updatePhotoDisplay(userData);
     
-    // TE ACTIVAS TUS PROPIOS CHECKBOX
     document.getElementById('cfg-show-skinfolds').checked = !!userData.showSkinfolds;
     document.getElementById('cfg-show-measures').checked = !!userData.showMeasurements;
     if(userData.restTime) document.getElementById('cfg-rest-time').value = userData.restTime;
@@ -484,7 +484,7 @@ window.loadProfile = async () => {
     });
 }
 
-// --- CONFIGURACIÓN PROPIA (Self Toggles) ---
+// --- CONFIGURACIÓN PROPIA ---
 window.saveSelfConfig = async (feature, value) => {
     const update = {}; update[feature] = value;
     await updateDoc(doc(db, "users", currentUser.uid), update);
@@ -619,20 +619,47 @@ function renderWorkout() {
 window.uS = (i,j,k,v) => { activeWorkout.exs[i].sets[j][k]=v; saveLocalWorkout(); };
 window.tS = (i,j) => { const s = activeWorkout.exs[i].sets[j]; s.d = !s.d; saveLocalWorkout(); const btn = document.getElementById(`btn-${i}-${j}`); if(s.d) { btn.classList.add('btn-done'); btn.innerText = '✓'; openRest(); } else { btn.classList.remove('btn-done'); btn.innerText = ''; } };
 
+// --- TIMER REAL (NO SE PAUSA CON LA PANTALLA) ---
 function openRest() {
     const m = document.getElementById('modal-timer'); m.classList.add('active');
-    const rest = userData.restTime || 60;
-    restTimeRemaining = rest;
-    document.getElementById('timer-display').innerText = restTimeRemaining;
+    
+    // Calcular HORA FINAL exacta
+    const restSeconds = userData.restTime || 60;
+    restEndTime = Date.now() + (restSeconds * 1000);
+    
+    document.getElementById('timer-display').innerText = restSeconds;
+    
     if(timerInt) clearInterval(timerInt);
+    
     timerInt = setInterval(() => {
-        restTimeRemaining--;
-        document.getElementById('timer-display').innerText = restTimeRemaining;
-        if(restTimeRemaining <= 0) { clearInterval(timerInt); m.classList.remove('active'); if(document.getElementById('cfg-sound').checked) { play5Beeps(); } }
-    }, 1000);
+        const now = Date.now();
+        const left = Math.ceil((restEndTime - now) / 1000);
+        
+        if(left >= 0) document.getElementById('timer-display').innerText = left;
+        
+        if(left <= 0) { 
+            clearInterval(timerInt); 
+            m.classList.remove('active'); 
+            
+            if(document.getElementById('cfg-sound').checked) { play5Beeps(); }
+            
+            // Notificación (Vibra en reloj)
+            if (Notification.permission === "granted") {
+                try {
+                    new Notification("¡A ENTRENAR! 💪", { body: "Descanso finalizado.", icon: "logo.png", vibrate: [200, 100, 200], tag: "rest-timer" });
+                } catch(e) { console.log(e); }
+            }
+        }
+    }, 500);
 }
+
 window.closeTimer = () => { clearInterval(timerInt); document.getElementById('modal-timer').classList.remove('active'); };
-window.addRestTime = (s) => { restTimeRemaining += s; document.getElementById('timer-display').innerText = restTimeRemaining; };
+
+window.addRestTime = (s) => { 
+    restEndTime += (s * 1000); // Simplemente añadimos tiempo a la fecha objetivo
+    // El intervalo se encargará de actualizar el número visualmente en el siguiente 'tic'
+};
+
 function startTimerMini() { const d=document.getElementById('mini-timer'); const s=Date.now(); setInterval(()=>{const df=Math.floor((Date.now()-s)/1000); d.innerText=`${Math.floor(df/60)}:${(df%60).toString().padStart(2,'0')}`;},1000); }
 
 window.promptRPE = () => {
@@ -775,39 +802,28 @@ window.assignToAssistant = async (assistantId) => {
     alert("Atleta reasignado"); openCoachView(selectedUserCoach, selectedUserObj);
 };
 
-// --- FUNCIÓN IR A CREAR RUTINA (ASIGNADA AL WINDOW) ---
+// --- FUNCIÓN IR A CREAR RUTINA ---
 window.goToCreateRoutine = () => {
     window.switchTab('routines-view');
     window.openEditor();
 };
 
-// --- BUSCADOR DE RUTINAS DEL COACH (NUEVO - FALTA AQUÍ) ---
+// --- BUSCADOR DE RUTINAS DEL COACH (NUEVO) ---
 window.filterCoachRoutines = (text) => {
     const s = document.getElementById('coach-routine-select');
     s.innerHTML = '';
     const term = normalizeText(text);
-    
-    // Filtrar de la caché que ya cargamos al abrir la vista
     const filtered = allRoutinesCache.filter(r => normalizeText(r.name).includes(term));
-    
-    if(filtered.length === 0) {
-        s.innerHTML = '<option value="">No encontrada</option>';
-    } else {
-        filtered.forEach(r => {
-            const o = document.createElement('option');
-            o.value = r.id;
-            o.innerText = r.name;
-            s.appendChild(o);
-        });
-    }
+    if(filtered.length === 0) { s.innerHTML = '<option value="">No encontrada</option>'; } 
+    else { filtered.forEach(r => { const o = document.createElement('option'); o.value = r.id; o.innerText = r.name; s.appendChild(o); }); }
 };
 
-// --- FUNCIÓN ASIGNAR RUTINA (ASIGNADA AL WINDOW) ---
+// --- FUNCIÓN ASIGNAR RUTINA ---
 window.assignRoutine = async () => {
     const select = document.getElementById('coach-routine-select');
     const rid = select.value;
     
-    if(!rid || rid === "" || rid === "Cargando...") {
+    if(!rid || rid === "" || rid === "Cargando..." || rid === "No encontrada") {
         return alert("❌ Por favor selecciona una rutina válida.");
     }
     if(!selectedUserCoach) return alert("❌ No hay usuario seleccionado.");
@@ -851,11 +867,9 @@ async function openCoachView(uid,u) {
             adminActions += `<button class="btn-small btn-danger" onclick="window.updateUserRole('athlete')">Bajar a Atleta</button>`;
         }
         if(freshU.role === 'athlete') {
-             // Forzar carga de assistants siempre antes de mostrar
              const qAssist = query(collection(db,"users"), where("role", "==", "assistant"));
              const snapA = await getDocs(qAssist);
              assistantsCache = snapA.docs.map(d=>({id:d.id, name:d.data().name}));
-             
              if(assistantsCache.length > 0) {
                  let options = `<option value="">-- Asignar a Coach --</option>`;
                  assistantsCache.forEach(a => options += `<option value="${a.id}">${a.name}</option>`);
@@ -873,7 +887,6 @@ async function openCoachView(uid,u) {
     const pCard = document.getElementById('coach-view-skinfolds');
     const mCard = document.getElementById('coach-view-measures');
     
-    // VISUALIZACIÓN DE MEDIDAS (FIXED)
     if(freshU.skinfoldHistory && freshU.skinfoldHistory.length > 0) {
         pCard.classList.remove('hidden');
         if(coachFatChart) coachFatChart.destroy();
@@ -888,31 +901,18 @@ async function openCoachView(uid,u) {
         renderMeasureChart('coachMeasuresChart', freshU.measureHistory);
     } else { mCard.classList.add('hidden'); }
 
-    // CARGA DE RUTINAS (FIXED: Await para evitar bloqueo)
     try {
-        const s = document.getElementById('coach-routine-select'); 
-        s.innerHTML = '<option>Cargando...</option>';
-        
+        const s = document.getElementById('coach-routine-select'); s.innerHTML = '<option>Cargando...</option>';
         const allRoutinesSnap = await getDocs(collection(db, "routines"));
         allRoutinesCache = [];
-        s.innerHTML = '<option value="">Selecciona rutina...</option>'; // Opción por defecto
-        
+        s.innerHTML = '<option value="">Selecciona rutina...</option>';
         allRoutinesSnap.forEach(r => {
-            const data = r.data(); 
-            allRoutinesCache.push({id: r.id, ...data});
-            const o = document.createElement('option'); 
-            o.value = r.id; 
-            o.innerText = data.name; 
-            s.appendChild(o); 
+            const data = r.data(); allRoutinesCache.push({id: r.id, ...data});
+            const o = document.createElement('option'); o.value = r.id; o.innerText = data.name; s.appendChild(o); 
         });
-
-        const rList = document.getElementById('coach-assigned-list'); 
-        rList.innerHTML = '';
+        const rList = document.getElementById('coach-assigned-list'); rList.innerHTML = '';
         const assignedRoutines = allRoutinesCache.filter(r => r.assignedTo && r.assignedTo.includes(uid));
-        
-        if(assignedRoutines.length === 0) { 
-            rList.innerHTML = 'Ninguna rutina asignada.'; 
-        } else {
+        if(assignedRoutines.length === 0) { rList.innerHTML = 'Ninguna rutina asignada.'; } else {
             assignedRoutines.forEach(r => {
                 const div = document.createElement('div'); div.className = "assigned-routine-item";
                 div.innerHTML = `<span>${r.name}</span><button style="background:none;border:none;color:#f55;font-weight:bold;cursor:pointer;" onclick="unassignRoutine('${r.id}')">❌</button>`;
@@ -936,9 +936,7 @@ async function openCoachView(uid,u) {
         const qH = query(collection(db,"workouts"), where("uid","==",uid));
         const wSnap = await getDocs(qH);
         hList.innerHTML = '';
-        if(wSnap.empty) {
-            hList.innerHTML='Sin datos recientes.';
-        } else {
+        if(wSnap.empty) { hList.innerHTML='Sin datos recientes.'; } else {
             const sortedDocs = wSnap.docs.map(doc => ({id: doc.id, ...doc.data()})).sort((a,b) => b.date - a.date).slice(0, 10);
             sortedDocs.forEach(d => {
                 const date = d.date ? new Date(d.date.seconds*1000).toLocaleDateString() : '-';

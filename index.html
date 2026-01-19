@@ -114,8 +114,6 @@
                 </div>
             </div>
 
-            <button class="btn-outline" style="margin-bottom:15px;" onclick="window.openProgress()">📈 EVOLUCIÓN POR EJERCICIO</button>
-
             <div class="card">
                 <h3>MAPA MUSCULAR</h3>
                 <div id="heatmap-container"></div>
@@ -174,7 +172,6 @@
                     <input type="number" id="p-supra" placeholder="Suprailiaco">
                     <input type="number" id="p-thigh" placeholder="Muslo">
                 </div>
-                <div id="fat-result" style="text-align:center; font-weight:bold; color:var(--accent-color); margin-bottom:10px;"></div>
                 <button class="btn-small btn-outline" onclick="window.calculateAndSaveSkinfolds()">CALCULAR Y GUARDAR</button>
             </div>
 
@@ -214,6 +211,12 @@
                      <span>Tiempo Descanso (s)</span>
                      <input type="number" id="cfg-rest-time" style="width:80px; margin:0; text-align:center;" value="60">
                 </div>
+                
+                <div style="margin-bottom:15px; padding-top:10px; border-top:1px solid #333;">
+                    <button class="btn-small btn-outline" style="width:100%; border-color:#444;" onclick="window.enableNotifications()">⌚ VINCULAR NOTIFICACIONES</button>
+                    <p style="font-size:0.65rem; color:#666; text-align:center; margin-top:5px;">Para que vibre el reloj al acabar el descanso</p>
+                </div>
+
                 <div style="margin-bottom:15px;">
                     <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">Recordatorio Fotos:</div>
                     <div style="display:flex; gap:10px;">
@@ -402,17 +405,6 @@
             <h3 id="detail-title" style="color:var(--accent-color); text-align:center; margin-bottom:15px;">DETALLES</h3>
             <div id="detail-content" style="font-size:0.85rem; max-height:60vh; overflow-y:auto;"></div>
             <button class="btn-outline" style="margin-top:15px;" onclick="document.getElementById('modal-details').classList.remove('active')">CERRAR</button>
-        </div>
-    </div>
-
-    <div id="modal-progress" class="modal">
-        <div class="modal-content">
-            <h3>📈 EVOLUCIÓN DETALLADA</h3>
-            <select id="progress-select" onchange="window.renderProgressChart(this.value)" style="margin-bottom:20px;"></select>
-            <div style="height:250px; width:100%; position:relative;">
-                <canvas id="progressChart"></canvas>
-            </div>
-            <button class="btn-outline" style="margin-top:20px;" onclick="document.getElementById('modal-progress').classList.remove('active')">CERRAR</button>
         </div>
     </div>
 
