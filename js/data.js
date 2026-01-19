@@ -1,8 +1,13 @@
 // --- BASE DE DATOS DE EJERCICIOS ---
 // t: 'c' (Compuesto) | t: 'i' (Aislado)
+// v: 'Link de YouTube' (Opcional)
+
 export const EXERCISES = [
     // --- CUÁDRICEPS ---
-    {n:"Sentadilla con Barra", img:"cuadriceps.png", m:"Cuádriceps", t:"c"},
+    // EJEMPLO CON VÍDEO (He puesto uno genérico, cámbialo por el tuyo)
+    {n:"Sentadilla con Barra", img:"cuadriceps.png", m:"Cuádriceps", t:"c", v:"https://www.youtube.com/watch?v=dQw4w9WgXcQ"},
+    
+    // El resto siguen igual (sin vídeo por defecto)
     {n:"Sentadilla Frontal Barra", img:"cuadriceps.png", m:"Cuádriceps", t:"c"},
     {n:"Sentadilla Jaca (Hack)", img:"cuadriceps.png", m:"Cuádriceps", t:"c"},
     {n:"Sentadilla Jaca Inversa", img:"cuadriceps.png", m:"Cuádriceps", t:"c"},
@@ -183,7 +188,7 @@ export const EXERCISES = [
     {n:"Encogimientos en Máquina", img:"hombros.png", m:"Hombros", t:"i"},
     {n:"Y-Raise Mancuernas", img:"hombros.png", m:"Hombros", t:"i"},
 
-    // --- BÍCEPS (NOMBRES CORREGIDOS) ---
+    // --- BÍCEPS ---
     {n:"Curl con Barra Recta (Bíceps)", img:"biceps.png", m:"Bíceps", t:"i"},
     {n:"Curl con Barra Z (Bíceps)", img:"biceps.png", m:"Bíceps", t:"i"},
     {n:"Curl con Mancuernas Supino (Bíceps)", img:"biceps.png", m:"Bíceps", t:"i"},
