@@ -1,16 +1,18 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, query, where, addDoc, deleteDoc, getDocs, serverTimestamp, increment, orderBy, limit, arrayRemove, arrayUnion } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-// NUEVO: LIBRERÍAS DE STORAGE
+// IMPORTACIONES DE STORAGE (PLAN BLAZE ACTIVADO)
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-// --- CONFIGURACIÓN FIREBASE (CON STORAGE) ---
+console.log("⚡ FIT DATA: Iniciando App vFinal (Blaze)...");
+
+// --- CONFIGURACIÓN FIREBASE ---
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
   authDomain: "fitdatatg.firebaseapp.com",
   projectId: "fitdatatg",
-  storageBucket: "fitdatatg.firebasestorage.app", // TU BUCKET DE STORAGE
+  storageBucket: "fitdatatg.firebasestorage.app", // Correcto para Blaze
   messagingSenderId: "1019606805247",
   appId: "1:1019606805247:web:3a3e5c0db061aa62773aca"
 };
@@ -18,7 +20,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app); // INICIALIZAR STORAGE
+const storage = getStorage(app); // Inicializamos Storage
 
 // ESTADO GLOBAL
 let audioCtx = null;
@@ -29,6 +31,7 @@ let currentRoutineSelections = [];
 
 // --- HELPER: NORMALIZAR TEXTO ---
 const normalizeText = (text) => {
+    if(!text) return "";
     return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 };
 
@@ -260,26 +263,23 @@ function updatePhotoDisplay(u) {
     document.getElementById('slider-handle').style.left = '0%'; document.getElementById('img-overlay').style.clipPath = 'inset(0 0 0 0)';
 }
 
-// --- SUBIDA A FIREBASE STORAGE (AVATAR) ---
+// --- SUBIDA A STORAGE (AVATAR) ---
 window.uploadAvatar = (inp) => { 
     if(inp.files[0]) { 
         const file = inp.files[0];
-        const path = `users/${currentUser.uid}/avatar.jpg`; // Sobrescribir para ahorrar espacio
+        const path = `users/${currentUser.uid}/avatar.jpg`;
         const storageRef = ref(storage, path);
-        
-        // No comprimimos avatar, suele ser pequeño. Si quisieras, usa el método canvas de abajo.
         uploadBytes(storageRef, file).then(async (snapshot) => {
             const url = await getDownloadURL(snapshot.ref);
-            // Truco: Añadimos ?t=timestamp para evitar cache del navegador al cambiar foto
-            const urlWithTime = `${url}?t=${Date.now()}`;
-            await updateDoc(doc(db,"users",currentUser.uid), {photo: url}); // Guardamos URL limpia
-            userData.photo = url; // Actualizamos local
+            const urlWithTime = `${url}?t=${Date.now()}`; 
+            await updateDoc(doc(db,"users",currentUser.uid), {photo: url}); 
+            userData.photo = url; 
             window.loadProfile();
         }).catch(e => alert("Error subiendo foto: " + e.message));
     } 
 };
 
-// --- SUBIDA A FIREBASE STORAGE (FOTOS PROGRESO COMPRIMIDAS) ---
+// --- SUBIDA A STORAGE (PROGRESO) ---
 window.loadCompImg = (inp, field) => { 
     if(inp.files[0]) { 
         const file = inp.files[0];
@@ -290,13 +290,11 @@ window.loadCompImg = (inp, field) => {
             img.onload = async () => { 
                 const canvas = document.createElement('canvas'); 
                 const ctx = canvas.getContext('2d'); 
-                // Redimensionar a 800px ancho (suficiente para móvil)
                 const scale = 800 / img.width; 
                 canvas.width = 800; 
                 canvas.height = img.height * scale; 
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
                 
-                // Convertir a BLOB JPG 80% calidad
                 canvas.toBlob(async (blob) => {
                     const prefix = currentPose === 'front' ? 'front' : 'back';
                     const timestamp = Date.now();
@@ -304,11 +302,9 @@ window.loadCompImg = (inp, field) => {
                     const storageRef = ref(storage, path);
                     
                     try {
-                        // 1. Subir a Storage
                         await uploadBytes(storageRef, blob);
                         const url = await getDownloadURL(storageRef);
                         
-                        // 2. Guardar URL en Firestore
                         const fieldPrefix = currentPose === 'front' ? '' : '_back';
                         const fieldName = field === 'before' ? `photoBefore${fieldPrefix}` : `photoAfter${fieldPrefix}`; 
                         const dateField = field === 'before' ? `dateBefore${fieldPrefix}` : `dateAfter${fieldPrefix}`; 
@@ -324,14 +320,10 @@ window.loadCompImg = (inp, field) => {
                         await updateDoc(doc(db, "users", currentUser.uid), update); 
                         userData[fieldName] = url; 
                         userData[dateField] = today; 
-                        // Actualizar array local para que se vea al momento si abres coach view
                         if(!userData[histField]) userData[histField] = [];
                         userData[histField].push(record);
-                        
                         updatePhotoDisplay(userData);
-                    } catch(err) {
-                        alert("Error subiendo imagen: " + err.message);
-                    }
+                    } catch(err) { alert("Error: " + err.message); }
                 }, 'image/jpeg', 0.8);
             }; 
         }; 
@@ -433,6 +425,7 @@ window.loadProfile = async () => {
     if(userData.photo) { document.getElementById('avatar-text').style.display='none'; document.getElementById('avatar-img').src = userData.photo; document.getElementById('avatar-img').style.display='block'; }
     updatePhotoDisplay(userData);
     
+    // TE ACTIVAS TUS PROPIOS CHECKBOX
     document.getElementById('cfg-show-skinfolds').checked = !!userData.showSkinfolds;
     document.getElementById('cfg-show-measures').checked = !!userData.showMeasurements;
     if(userData.restTime) document.getElementById('cfg-rest-time').value = userData.restTime;
@@ -782,6 +775,60 @@ window.assignToAssistant = async (assistantId) => {
     alert("Atleta reasignado"); openCoachView(selectedUserCoach, selectedUserObj);
 };
 
+// --- FUNCIÓN IR A CREAR RUTINA (ASIGNADA AL WINDOW) ---
+window.goToCreateRoutine = () => {
+    window.switchTab('routines-view');
+    window.openEditor();
+};
+
+// --- BUSCADOR DE RUTINAS DEL COACH (NUEVO - FALTA AQUÍ) ---
+window.filterCoachRoutines = (text) => {
+    const s = document.getElementById('coach-routine-select');
+    s.innerHTML = '';
+    const term = normalizeText(text);
+    
+    // Filtrar de la caché que ya cargamos al abrir la vista
+    const filtered = allRoutinesCache.filter(r => normalizeText(r.name).includes(term));
+    
+    if(filtered.length === 0) {
+        s.innerHTML = '<option value="">No encontrada</option>';
+    } else {
+        filtered.forEach(r => {
+            const o = document.createElement('option');
+            o.value = r.id;
+            o.innerText = r.name;
+            s.appendChild(o);
+        });
+    }
+};
+
+// --- FUNCIÓN ASIGNAR RUTINA (ASIGNADA AL WINDOW) ---
+window.assignRoutine = async () => {
+    const select = document.getElementById('coach-routine-select');
+    const rid = select.value;
+    
+    if(!rid || rid === "" || rid === "Cargando...") {
+        return alert("❌ Por favor selecciona una rutina válida.");
+    }
+    if(!selectedUserCoach) return alert("❌ No hay usuario seleccionado.");
+
+    try {
+        const rRef = doc(db, "routines", rid); 
+        await updateDoc(rRef, { assignedTo: arrayUnion(selectedUserCoach) }); 
+        alert("✅ Rutina Asignada Correctamente");
+        openCoachView(selectedUserCoach, selectedUserObj); 
+    } catch(e) {
+        alert("Error asignando: " + e.message);
+    }
+};
+
+window.unassignRoutine = async (rid) => {
+    if(confirm("¿Quitar esta rutina al atleta?")) {
+        await updateDoc(doc(db, "routines", rid), { assignedTo: arrayRemove(selectedUserCoach) });
+        openCoachView(selectedUserCoach, selectedUserObj); 
+    }
+};
+
 async function openCoachView(uid,u) {
     selectedUserCoach=uid;
     const freshSnap = await getDoc(doc(db, "users", uid));
@@ -804,15 +851,14 @@ async function openCoachView(uid,u) {
             adminActions += `<button class="btn-small btn-danger" onclick="window.updateUserRole('athlete')">Bajar a Atleta</button>`;
         }
         if(freshU.role === 'athlete') {
+             // Forzar carga de assistants siempre antes de mostrar
              const qAssist = query(collection(db,"users"), where("role", "==", "assistant"));
              const snapA = await getDocs(qAssist);
+             assistantsCache = snapA.docs.map(d=>({id:d.id, name:d.data().name}));
              
-             if(!snapA.empty) {
-                 let options = `<option value="">-- Asignar a otro Coach --</option>`;
-                 snapA.forEach(d => {
-                     const aData = d.data();
-                     options += `<option value="${d.id}">${aData.name}</option>`;
-                 });
+             if(assistantsCache.length > 0) {
+                 let options = `<option value="">-- Asignar a Coach --</option>`;
+                 assistantsCache.forEach(a => options += `<option value="${a.id}">${a.name}</option>`);
                  adminActions += `<div style="margin-top:10px;"><select onchange="window.assignToAssistant(this.value)">${options}</select></div>`;
              }
         }
@@ -827,6 +873,7 @@ async function openCoachView(uid,u) {
     const pCard = document.getElementById('coach-view-skinfolds');
     const mCard = document.getElementById('coach-view-measures');
     
+    // VISUALIZACIÓN DE MEDIDAS (FIXED)
     if(freshU.skinfoldHistory && freshU.skinfoldHistory.length > 0) {
         pCard.classList.remove('hidden');
         if(coachFatChart) coachFatChart.destroy();
@@ -841,18 +888,31 @@ async function openCoachView(uid,u) {
         renderMeasureChart('coachMeasuresChart', freshU.measureHistory);
     } else { mCard.classList.add('hidden'); }
 
+    // CARGA DE RUTINAS (FIXED: Await para evitar bloqueo)
     try {
-        const s = document.getElementById('coach-routine-select'); s.innerHTML = '<option>Cargando...</option>';
+        const s = document.getElementById('coach-routine-select'); 
+        s.innerHTML = '<option>Cargando...</option>';
+        
         const allRoutinesSnap = await getDocs(collection(db, "routines"));
         allRoutinesCache = [];
-        s.innerHTML = '<option value="">Selecciona rutina...</option>';
+        s.innerHTML = '<option value="">Selecciona rutina...</option>'; // Opción por defecto
+        
         allRoutinesSnap.forEach(r => {
-            const data = r.data(); allRoutinesCache.push({id: r.id, ...data});
-            const o = document.createElement('option'); o.value = r.id; o.innerText = data.name; s.appendChild(o); 
+            const data = r.data(); 
+            allRoutinesCache.push({id: r.id, ...data});
+            const o = document.createElement('option'); 
+            o.value = r.id; 
+            o.innerText = data.name; 
+            s.appendChild(o); 
         });
-        const rList = document.getElementById('coach-assigned-list'); rList.innerHTML = '';
+
+        const rList = document.getElementById('coach-assigned-list'); 
+        rList.innerHTML = '';
         const assignedRoutines = allRoutinesCache.filter(r => r.assignedTo && r.assignedTo.includes(uid));
-        if(assignedRoutines.length === 0) { rList.innerHTML = 'Ninguna rutina asignada.'; } else {
+        
+        if(assignedRoutines.length === 0) { 
+            rList.innerHTML = 'Ninguna rutina asignada.'; 
+        } else {
             assignedRoutines.forEach(r => {
                 const div = document.createElement('div'); div.className = "assigned-routine-item";
                 div.innerHTML = `<span>${r.name}</span><button style="background:none;border:none;color:#f55;font-weight:bold;cursor:pointer;" onclick="unassignRoutine('${r.id}')">❌</button>`;
