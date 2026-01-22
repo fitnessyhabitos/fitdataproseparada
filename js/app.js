@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: App Shell Nativo iOS v9.1");
+console.log("⚡ FIT DATA: Iniciando App (Híbrida v9.2)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -114,9 +114,10 @@ onAuthStateChanged(auth, async (user) => {
             userData = snap.data();
             checkPhotoReminder();
             
-            // Botón Coach en Header
+            // Lógica Coach Button
             if(userData.role === 'admin' || userData.role === 'assistant') {
-                document.getElementById('btn-coach').classList.remove('hidden');
+                const btn = document.getElementById('btn-coach');
+                if(btn) btn.classList.remove('hidden');
             }
 
             if(userData.role !== 'admin' && userData.role !== 'assistant' && !sessionStorage.getItem('notif_dismissed')) {
@@ -125,11 +126,13 @@ onAuthStateChanged(auth, async (user) => {
             }
 
             if(userData.approved){
-                setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 1500); 
+                // AUMENTADO A 2000ms para que se vea el logo
+                setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 2000); 
                 document.getElementById('main-header').classList.remove('hidden');
                 
-                // Mostrar barra inferior en móvil si no es admin (o si es admin también)
-                // Usamos media query en CSS para ocultar en desktop
+                // Aseguramos que el nav se vea si estamos en móvil
+                const bottomNav = document.getElementById('bottom-nav');
+                if(bottomNav && window.innerWidth < 768) bottomNav.style.display = 'flex';
                 
                 loadRoutines();
                 const savedW = localStorage.getItem('fit_active_workout');
@@ -145,6 +148,8 @@ onAuthStateChanged(auth, async (user) => {
         setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 1500);
         switchTab('auth-view');
         document.getElementById('main-header').classList.add('hidden');
+        const bn = document.getElementById('bottom-nav');
+        if(bn) bn.style.display = 'none';
     }
 });
 
@@ -171,7 +176,6 @@ window.switchTab = (t) => {
     if (t === 'routines-view') {
         const btnM = document.getElementById('nav-routines');
         if(btnM) btnM.classList.add('active');
-        // Para desktop buscar el link correspondiente si quieres resaltarlo
         const links = document.querySelectorAll('.d-link');
         if(links[0]) links[0].classList.add('active');
     }
@@ -182,7 +186,6 @@ window.switchTab = (t) => {
         if(links[1]) links[1].classList.add('active');
         loadProfile();
     }
-    // Admin view no tiene botón activo en el nav inferior, está en el header
 };
 
 window.toggleAuth = (m) => { document.getElementById('login-form').classList.toggle('hidden',m!=='login'); document.getElementById('register-form').classList.toggle('hidden',m!=='register'); };
