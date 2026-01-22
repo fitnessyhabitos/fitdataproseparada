@@ -68,7 +68,11 @@ header {
 .brand-text span { color: var(--accent-color); text-shadow: 0 0 10px rgba(255,51,51,0.5); }
 
 /* CONTENEDOR MENÚ DERECHA */
-.header-actions { display: flex; align-items: center; gap: 15px; }
+.header-right-zone { 
+    display: flex; 
+    align-items: center; 
+    gap: 15px; 
+}
 
 /* BOTONES SUPERIORES: Icono + Texto en fila */
 .top-nav-item { 
