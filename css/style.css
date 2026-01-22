@@ -51,7 +51,7 @@ body {
 /* HEADER ACTUALIZADO: Logo + Menú Horizontal */
 header { 
     flex-shrink: 0; 
-    height: calc(65px + var(--safe-top)); 
+    height: calc(70px + var(--safe-top)); /* Altura un poco mayor para los iconos */
     padding-top: var(--safe-top); 
     background: rgba(5,5,5,0.98); 
     border-bottom: 1px solid #222; 
@@ -67,14 +67,15 @@ header {
 .header-logo { height: 32px; width: 32px; object-fit: cover; border-radius: 6px; border: 1px solid #333; }
 .brand-text span { color: var(--accent-color); text-shadow: 0 0 10px rgba(255,51,51,0.5); }
 
-/* CONTENEDOR MENÚ DERECHA */
-.header-right-zone { 
+/* CONTENEDOR MENÚ DERECHA - SIEMPRE EN FILA */
+.header-menu { 
     display: flex; 
+    flex-direction: row !important; /* FORZAR FILA */
     align-items: center; 
     gap: 15px; 
 }
 
-/* BOTONES SUPERIORES: Icono + Texto en fila */
+/* BOTONES SUPERIORES: Icono + Texto en columna pero dispuestos en fila */
 .top-nav-item { 
     display: flex; 
     flex-direction: column; 
@@ -85,19 +86,19 @@ header {
     transition: color 0.2s; 
 }
 .top-icon { 
-    font-size: 1.3rem; 
+    font-size: 1.4rem; 
     margin-bottom: 0px; 
     line-height: 1; 
 }
 .top-label { 
-    font-size: 0.6rem; 
+    font-size: 0.55rem; 
     font-weight: bold; 
     text-transform: uppercase; 
 }
 .top-nav-item.active { color: var(--accent-color); }
 .top-nav-item.active .top-label { color: var(--accent-color); }
 
-.notif-badge { display:none; background:var(--accent-color); color:white; border-radius:50%; width:24px; height:24px; text-align:center; line-height:24px; font-size:0.8rem; margin-left:10px; animation: breathe 2s infinite; cursor: pointer; }
+.notif-badge { display:none; background:var(--accent-color); color:white; border-radius:50%; width:20px; height:20px; text-align:center; line-height:20px; font-size:0.7rem; margin-left:10px; animation: breathe 2s infinite; cursor: pointer; }
 
 #main-container { flex: 1; overflow-y: auto; position: relative; -webkit-overflow-scrolling: touch; padding-bottom: 20px; }
 .view-container { min-height: 100%; padding: 20px 15px 40px 15px; display: none; opacity: 0; animation: fadeIn 0.3s forwards; }
