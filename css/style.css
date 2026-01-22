@@ -19,20 +19,21 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-/* COMPORTAMIENTO NATIVO IOS: Body fijo */
+/* --- BLOQUEO TOTAL IOS --- */
 body { 
     background-color: var(--bg-color); 
     color: var(--text-color); 
     font-family: var(--font-main); 
-    position: fixed; /* CLAVE */
-    top: 0; left: 0; width: 100%; height: 100dvh; 
+    position: fixed; /* Mantiene la app inmóvil */
+    top: 0; left: 0; width: 100%; height: 100%; 
     overflow: hidden; 
+    display: flex; flex-direction: column;
     overscroll-behavior: none; 
 }
 
 .hidden { display: none !important; }
 
-/* HEADER SUPERIOR FIJO */
+/* HEADER SUPERIOR (FIXED) */
 header { 
     position: fixed; 
     top: 0; left: 0; width: 100%; 
@@ -42,22 +43,25 @@ header {
     border-bottom: 1px solid #222; 
     display: flex; justify-content: space-between; align-items: center; 
     padding-left: 20px; padding-right: 20px; 
-    z-index: 5000; /* Siempre encima */
+    z-index: 5000;
 }
-
 .brand { display: flex; align-items: center; gap: 12px; font-family: var(--font-sport); font-size: 1.3rem; color: white; letter-spacing: 1px; text-transform: uppercase; }
-.header-logo { height: 32px; width: 32px; object-fit: cover; border-radius: 6px; border: 1px solid #333; }
+.header-logo { height: 32px; width: 32px; object-fit: contain; border-radius: 6px; border: 1px solid #333; }
 .brand-text span { color: var(--accent-color); text-shadow: 0 0 10px rgba(255,51,51,0.5); }
-
 .header-right { display: flex; align-items: center; gap: 15px; }
 
-/* Botón Coach en Header */
+/* Botón Coach (Header) */
 .header-icon-btn { display: flex; flex-direction: column; align-items: center; cursor: pointer; color: #ffaa00; }
 .notif-badge { display:none; background:var(--accent-color); color:white; border-radius:50%; width:24px; height:24px; text-align:center; line-height:24px; font-size:0.8rem; cursor: pointer; }
 
-/* CONTENEDOR PRINCIPAL: SCROLL INDEPENDIENTE (App Shell) */
+/* Enlaces Desktop (Ocultos por defecto en móvil) */
+.desktop-nav { display: none; gap: 20px; }
+.d-link { cursor: pointer; font-weight: bold; color: #888; font-size: 0.9rem; }
+.d-link.active { color: var(--accent-color); }
+
+/* CONTENEDOR PRINCIPAL (Scroll Independiente) */
 #main-container { 
-    position: absolute; /* CLAVE */
+    position: absolute; 
     top: calc(var(--header-height) + var(--safe-top)); 
     bottom: calc(var(--footer-height) + var(--safe-bottom)); 
     left: 0; width: 100%; 
@@ -66,12 +70,11 @@ header {
     padding: 20px 15px; 
     background: var(--bg-color);
 }
-
 .view-container { display: none; opacity: 0; animation: fadeIn 0.3s forwards; }
 .view-container.active { display: block; opacity: 1; }
 @keyframes fadeIn { to { opacity: 1; } }
 
-/* BARRA INFERIOR FIJA (ESTRICTA IOS) */
+/* BARRA INFERIOR (Móvil) */
 .bottom-nav {
     position: fixed;
     bottom: 0; left: 0; width: 100%;
@@ -79,27 +82,29 @@ header {
     border-top: 1px solid #222;
     display: flex;
     justify-content: space-around;
-    /* Alineación abajo para que se vea nativo */
+    /* Alineación abajo */
     align-items: flex-end; 
     padding-bottom: var(--safe-bottom);
     height: calc(var(--footer-height) + var(--safe-bottom));
     z-index: 5000;
 }
-
 .nav-item { 
     flex: 1; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    justify-content: flex-start; /* Iconos empiezan arriba */
-    color: #555; 
-    font-size: 0.65rem; 
-    cursor: pointer; 
-    padding-top: 6px; /* Separación solicitada */
+    display: flex; flex-direction: column; 
+    align-items: center; justify-content: flex-start; 
+    color: #555; font-size: 0.65rem; cursor: pointer; 
+    padding-top: 6px; 
     height: 100%;
 }
 .nav-item.active { color: var(--accent-color); }
 .nav-icon { font-size: 1.5rem; margin-bottom: 3px; }
+
+/* MEDIA QUERY: ESCRITORIO */
+@media (min-width: 768px) {
+    .bottom-nav { display: none !important; }
+    .desktop-nav { display: flex; }
+    #main-container { bottom: 0; }
+}
 
 /* UI ELEMENTS */
 .card { background: var(--card-color); border-radius: 12px; padding: 18px; margin-bottom: 18px; border: 1px solid #222; position: relative; }

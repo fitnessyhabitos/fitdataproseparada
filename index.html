@@ -23,13 +23,18 @@
 
     <header id="main-header" class="hidden">
         <div class="brand">
-            <img src="logo.png" class="header-logo" onerror="this.style.display='none'">
+            <img src="logo.png" class="header-logo-img" onerror="this.style.display='none'">
             <div class="brand-text">FIT DATA <span>PRO</span></div>
         </div>
         
         <div class="header-right">
+            <nav class="desktop-nav">
+                <span class="d-link active" onclick="window.switchTab('routines-view')">RUTINAS</span>
+                <span class="d-link" onclick="window.switchTab('profile-view')">PERFIL</span>
+            </nav>
+
             <div id="btn-coach" class="header-icon-btn hidden" onclick="window.loadAdminUsers(); window.switchTab('admin-view');">
-                <span style="font-size:1.4rem;">🛡️</span>
+                <span style="font-size:1.2rem;">🛡️</span>
                 <span style="font-size:0.5rem; font-weight:bold; color:#ffaa00; margin-top:-2px;">COACH</span>
             </div>
 
@@ -242,22 +247,6 @@
             <button class="btn-outline" style="border-color:#500; color:#f55; margin-bottom:20px;" onclick="window.logout()">CERRAR SESIÓN</button>
         </section>
 
-        <section id="workout-view" class="view-container">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; position:sticky; top:0; background:var(--bg-color); z-index:10; padding:10px 0; border-bottom:1px solid #222;">
-                <button onclick="window.switchTab('routines-view')" style="background:none; border:none; color:#666; font-size:1.5rem;">✕</button>
-                <div style="text-align:center;">
-                    <span style="font-size:0.6rem; color:#666;">TIEMPO</span><br>
-                    <span id="mini-timer" style="color:var(--accent-color); font-weight:bold;">00:00</span>
-                </div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <button class="btn-danger btn-small" style="margin:0; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px;" onclick="window.cancelWorkout()">🗑️</button>
-                    <button class="btn-small btn" style="margin:0;" onclick="window.promptRPE()">TERMINAR</button>
-                </div>
-            </div>
-            <h2 id="workout-title" style="margin-bottom:20px;">Entreno</h2>
-            <div id="workout-exercises"></div>
-        </section>
-
         <section id="admin-view" class="view-container">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <h2>PANEL COACH</h2>
@@ -323,6 +312,22 @@
             <div class="card"><h3>RUTINAS ASIGNADAS</h3><div id="coach-assigned-list"></div><label>Asignar Nueva:</label><input type="text" placeholder="🔍" id="coach-routine-filter" oninput="window.filterCoachRoutines(this.value)"><select id="coach-routine-select"></select><button class="btn" onclick="window.assignRoutine()">ENVIAR</button></div>
             <div class="card"><h3>HISTORIAL</h3><div id="coach-history-list"></div></div>
             <button class="btn-danger btn" style="width:100%; margin-bottom:30px;" onclick="window.deleteUser()">🗑️ ELIMINAR ATLETA</button>
+        </section>
+
+        <section id="workout-view" class="view-container">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; position:sticky; top:0; background:var(--bg-color); z-index:10; padding:10px 0; border-bottom:1px solid #222;">
+                <button onclick="window.switchTab('routines-view')" style="background:none; border:none; color:#666; font-size:1.5rem;">✕</button>
+                <div style="text-align:center;">
+                    <span style="font-size:0.6rem; color:#666;">TIEMPO</span><br>
+                    <span id="mini-timer" style="color:var(--accent-color); font-weight:bold;">00:00</span>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button class="btn-danger btn-small" style="margin:0; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px;" onclick="window.cancelWorkout()">🗑️</button>
+                    <button class="btn-small btn" style="margin:0;" onclick="window.promptRPE()">TERMINAR</button>
+                </div>
+            </div>
+            <h2 id="workout-title" style="margin-bottom:20px;">Entreno</h2>
+            <div id="workout-exercises"></div>
         </section>
 
     </main>
