@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App (Unified Nav)...");
+console.log("⚡ FIT DATA: Iniciando App v12.0 (Stable Layout)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -98,10 +98,10 @@ window.enableNotifications = () => {
     }
     Notification.requestPermission().then((permission) => {
         if (permission === "granted") {
-            alert("✅ Vinculado.");
-            new Notification("Fit Data", { body: "Prueba correcta.", icon: "logo.png" });
+            alert("✅ Vinculado. El reloj vibrará al acabar.");
+            new Notification("Fit Data", { body: "Prueba de conexión exitosa.", icon: "logo.png" });
         } else {
-            alert("❌ Permiso denegado.");
+            alert("❌ Permiso denegado. Revisa la configuración.");
         }
     });
 };
@@ -113,7 +113,34 @@ window.navToCoach = () => {
     }
 };
 
+function checkInstallPrompt() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) return;
+    const ua = navigator.userAgent;
+    const banner = document.getElementById('install-banner');
+    const text = document.getElementById('install-text');
+    if (/iPhone|iPad|iPod/.test(ua)) {
+        banner.classList.remove('hidden');
+        text.innerHTML = "Pulsa <b>Compartir</b> <span style='font-size:1.2rem'>⎋</span> y luego <b>'Añadir a inicio'</b> (+).";
+    } else if (/Android/.test(ua)) {
+        banner.classList.remove('hidden');
+        text.innerHTML = "Pulsa menú <b>(⋮)</b> y selecciona <b>'Instalar aplicación'</b>.";
+    }
+}
+window.addEventListener('load', checkInstallPrompt);
+
+// --- CORRECCIÓN CARGA IOS ---
+let appReady = false;
+
 onAuthStateChanged(auth, async (user) => {
+    // 1. BACKUP: Quitar pantalla a los 2.5s pase lo que pase
+    if (!appReady) {
+        setTimeout(() => { 
+            const loader = document.getElementById('loading-screen');
+            if(loader) loader.style.display = 'none'; 
+        }, 2500); 
+    }
+
     if(user) {
         currentUser = user;
         const snap = await getDoc(doc(db,"users",user.uid));
@@ -121,12 +148,10 @@ onAuthStateChanged(auth, async (user) => {
             userData = snap.data();
             checkPhotoReminder();
             
-            // Lógica Coach Button
+            // Mostrar Botón Coach
             if(userData.role === 'admin' || userData.role === 'assistant') {
-                const btnPC = document.getElementById('pc-btn-coach');
-                const btnMobile = document.getElementById('mobile-btn-coach');
-                if(btnPC) btnPC.classList.remove('hidden');
-                if(btnMobile) btnMobile.classList.remove('hidden');
+                const btn = document.getElementById('btn-coach');
+                if(btn) btn.classList.remove('hidden');
             }
 
             if(userData.role !== 'admin' && userData.role !== 'assistant' && !sessionStorage.getItem('notif_dismissed')) {
@@ -135,7 +160,6 @@ onAuthStateChanged(auth, async (user) => {
             }
 
             if(userData.approved){
-                setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 2000); 
                 document.getElementById('main-header').classList.remove('hidden');
                 
                 // Mostrar barra inferior en móvil
@@ -153,18 +177,20 @@ onAuthStateChanged(auth, async (user) => {
             } else { alert("Cuenta en revisión."); signOut(auth); }
         }
     } else {
-        setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 1500);
         switchTab('auth-view');
         document.getElementById('main-header').classList.add('hidden');
         const bn = document.getElementById('bottom-nav');
         if(bn) bn.style.display = 'none';
+        checkInstallPrompt();
     }
+    appReady = true;
 });
 
 function checkPhotoReminder() {
     if(!userData.photoDay) return;
     const now = new Date();
     const day = now.getDay();
+    const time = now.toTimeString().substr(0,5);
     // Aviso simple
     if(day == userData.photoDay) {
         if (Notification.permission === "granted") {
@@ -182,9 +208,11 @@ window.switchTab = (t) => {
     // 3. Resetear scroll
     document.getElementById('main-container').scrollTop = 0;
     
-    // 4. Actualizar botones (Header y Bottom Nav)
-    const navItems = document.querySelectorAll('.nav-item, .top-nav-item');
-    navItems.forEach(n => n.classList.remove('active'));
+    // 4. Actualizar botones del HEADER (nav-item-top)
+    document.querySelectorAll('.nav-item-top').forEach(n => n.classList.remove('active'));
+    
+    // 5. Actualizar botones FOOTER MÓVIL
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     
     if (t === 'routines-view') {
         const btnM = document.getElementById('mobile-nav-routines');
@@ -201,10 +229,8 @@ window.switchTab = (t) => {
     }
     // Coach activo
     if (t === 'admin-view' || t === 'coach-detail-view') {
-        const btnM = document.getElementById('mobile-btn-coach');
-        if(btnM) btnM.classList.add('active');
-        const btnPC = document.getElementById('pc-btn-coach');
-        if(btnPC) btnPC.classList.add('active');
+        const btn = document.getElementById('btn-coach');
+        if(btn) btn.classList.add('active');
     }
 };
 
@@ -415,6 +441,68 @@ window.deletePhoto = async (type) => {
 window.moveSlider = (v) => { 
     document.getElementById('img-overlay').style.clipPath = `inset(0 0 0 ${v}%)`; 
     document.getElementById('slider-handle').style.left = `${v}%`; 
+};
+
+window.switchCoachPose = (pose) => {
+    coachCurrentPose = pose;
+    document.getElementById('coach-tab-front').classList.toggle('active', pose==='front');
+    document.getElementById('coach-tab-back').classList.toggle('active', pose==='back');
+    updateCoachPhotoDisplay(pose);
+};
+
+function updateCoachPhotoDisplay(pose) {
+    const u = selectedUserObj;
+    if(!u) return;
+    const prefix = pose === 'front' ? '' : '_back';
+    const histField = prefix === '' ? 'photoHistoryFront' : 'photoHistoryBack';
+    const history = u[histField] || [];
+
+    const pCont = document.getElementById('coach-photos-container');
+    pCont.innerHTML = `
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+             <select id="c-sel-before" onchange="window.updateCoachSliderImages()" style="margin:0; font-size:0.8rem;"></select>
+             <select id="c-sel-after" onchange="window.updateCoachSliderImages()" style="margin:0; font-size:0.8rem;"></select>
+        </div>
+        <div class="compare-wrapper" style="min-height:250px; background:#000; position:relative;">
+            <div class="slider-labels"><span class="label-tag">ANTES</span><span class="label-tag">AHORA</span></div>
+            <img src="" id="c-img-before" class="compare-img" style="width:100%; height:100%; object-fit:contain;">
+            <img src="" id="c-img-after" class="compare-img img-overlay" style="clip-path:inset(0 0 0 0); width:100%; height:100%; object-fit:contain;">
+            <div class="slider-handle" id="coach-slider-handle" style="left:0%"><div class="slider-btn"></div></div>
+        </div>
+        <input type="range" min="0" max="100" value="0" style="width:100%; margin-top:15px;" oninput="window.moveCoachSlider(this.value)">
+    `;
+    const selB = document.getElementById('c-sel-before');
+    const selA = document.getElementById('c-sel-after');
+    if(history.length === 0) {
+        const current = u[`photoBefore${prefix}`];
+        const opt = new Option(current ? "Actual" : "Sin fotos", current || "");
+        selB.add(opt); selA.add(opt.cloneNode(true));
+    } else {
+        history.forEach((h, i) => {
+            const label = h.date || `Foto ${i+1}`;
+            selB.add(new Option(label, h.url));
+            selA.add(new Option(label, h.url));
+        });
+        selB.selectedIndex = 0;
+        selA.selectedIndex = history.length - 1;
+    }
+    window.updateCoachSliderImages();
+}
+
+window.updateCoachSliderImages = () => {
+    const urlB = document.getElementById('c-sel-before').value;
+    const urlA = document.getElementById('c-sel-after').value;
+    const imgB = document.getElementById('c-img-before');
+    const imgA = document.getElementById('c-img-after');
+    if(imgB) imgB.src = urlB;
+    if(imgA) imgA.src = urlA;
+};
+
+window.moveCoachSlider = (v) => {
+    const overlay = document.getElementById('c-img-after');
+    const handle = document.getElementById('coach-slider-handle');
+    if(overlay) overlay.style.clipPath = `inset(0 0 0 ${v}%)`;
+    if(handle) handle.style.left = `${v}%`;
 };
 
 function renderMeasureChart(canvasId, historyData) {
