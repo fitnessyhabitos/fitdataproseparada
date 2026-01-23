@@ -24,35 +24,18 @@
     <header id="main-header" class="hidden">
         <div class="brand">
             <img src="logo.png" class="header-logo" onerror="this.style.display='none'">
-            <div class="brand-text">FIT DATA <span>PRO</span></div>
+            <div>FIT DATA <span>PRO</span></div>
         </div>
         
-        <div class="header-right">
-            <div id="btn-coach" class="nav-item-top hidden" onclick="window.navToCoach()">
-                <span class="nav-icon">🛡️</span>
-                <span class="nav-label coach-label">COACH</span>
-            </div>
-
-            <div class="desktop-nav desktop-only">
-                <div id="pc-btn-routines" class="nav-item-top active" onclick="window.switchTab('routines-view')">
-                    <span class="nav-icon">🏋️</span>
-                    <span class="nav-label">RUTINAS</span>
-                </div>
-                <div id="pc-btn-profile" class="nav-item-top" onclick="window.switchTab('profile-view')">
-                    <span class="nav-icon">⚙️</span>
-                    <span class="nav-label">PERFIL</span>
-                </div>
-            </div>
-
+        <div class="header-actions">
             <div id="notif-badge" class="notif-badge" onclick="window.dismissNotif()">🔔</div>
         </div>
     </header>
 
     <main id="main-container">
-        
         <section id="auth-view" class="view-container">
-            <div style="text-align:center; margin: 40px 0;">
-                <img src="logo.png" style="width:100px; border-radius:20px; margin-bottom:15px;" onerror="this.src='https://placehold.co/100x100?text=FD'">
+            <div style="text-align:center; margin: 50px 0;">
+                <img src="logo.png" style="width:110px; border-radius:20px; margin-bottom:15px;" onerror="this.src='https://placehold.co/100x100?text=FD'">
                 <h1>ACCESO</h1>
             </div>
             <div id="login-form">
@@ -60,14 +43,7 @@
                 <input type="password" id="login-pass" placeholder="Contraseña">
                 <button class="btn" id="btn-login">ENTRAR</button>
                 <div class="link-text" onclick="window.recoverPass()">¿Olvidaste tu contraseña?</div>
-                <button class="btn-outline" onclick="window.toggleAuth('register')" style="margin-top:20px;">CREAR CUENTA</button>
-                
-                <div id="installInstructions" class="install-box hidden">
-                    <h4 style="color:var(--warning-color); margin-bottom:10px;">📲 INSTALAR APP</h4>
-                    <div class="pwa-steps" style="margin-bottom:5px;">🍎 <strong>iOS:</strong> Compartir (⎋) > Añadir a inicio.</div>
-                    <div class="pwa-steps">🤖 <strong>Android:</strong> Menú (⋮) > Instalar aplicación.</div>
-                </div>
-
+                <button class="btn-outline" onclick="window.toggleAuth('register')" style="margin-top:30px;">CREAR CUENTA</button>
             </div>
             <div id="register-form" class="hidden">
                 <input type="text" id="reg-name" placeholder="Nombre">
@@ -183,7 +159,11 @@
                     <button class="btn-small btn-outline" style="width:auto; padding:2px 8px; margin:0;" onclick="window.toggleElement('img-pliegues')">ℹ️ Guía</button>
                 </div>
                 <img id="img-pliegues" src="pliegues.png" class="hidden" style="width:100%; border-radius:8px; margin-bottom:15px; border:1px solid #333;">
-                <div style="height:200px; width:100%; position:relative; margin-bottom:15px;"><canvas id="chartFat"></canvas></div>
+                
+                <div style="height:200px; width:100%; position:relative; margin-bottom:15px;">
+                    <canvas id="chartFat"></canvas>
+                </div>
+                <div class="tip-box" style="margin-bottom:10px;">Introduce los milímetros (mm)</div>
                 <div class="measure-grid">
                     <input type="number" id="p-chest" placeholder="Pecho">
                     <input type="number" id="p-axilla" placeholder="Axilar">
@@ -202,7 +182,10 @@
                     <button class="btn-small btn-outline" style="width:auto; padding:2px 8px; margin:0;" onclick="window.toggleElement('img-medidas')">ℹ️ Guía</button>
                 </div>
                 <img id="img-medidas" src="medidas.png" class="hidden" style="width:100%; border-radius:8px; margin-bottom:15px; border:1px solid #333;">
-                <div style="height:250px; width:100%; position:relative; margin-bottom:15px;"><canvas id="chartMeasures"></canvas></div>
+
+                <div style="height:250px; width:100%; position:relative; margin-bottom:15px;">
+                    <canvas id="chartMeasures"></canvas>
+                </div>
                 <div class="measure-grid">
                     <input type="number" id="m-chest" placeholder="Pecho">
                     <input type="number" id="m-waist" placeholder="Cintura">
@@ -226,13 +209,15 @@
                     <label class="switch"><input type="checkbox" id="cfg-show-measures" onchange="window.saveSelfConfig('showMeasurements', this.checked)"><span class="slider"></span></label>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                     <span>Tiempo Descanso (s)</span>
-                     <input type="number" id="cfg-rest-time" style="width:80px; margin:0; text-align:center;" value="60">
+                      <span>Tiempo Descanso (s)</span>
+                      <input type="number" id="cfg-rest-time" style="width:80px; margin:0; text-align:center;" value="60">
                 </div>
+                
                 <div style="margin-bottom:15px; padding-top:10px; border-top:1px solid #333;">
                     <button class="btn-small btn-outline" style="width:100%; border-color:#444;" onclick="window.enableNotifications()">⌚ VINCULAR NOTIFICACIONES</button>
                     <p style="font-size:0.65rem; color:#666; text-align:center; margin-top:5px;">Para que vibre el reloj al acabar el descanso</p>
                 </div>
+
                 <div style="margin-bottom:15px;">
                     <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">Recordatorio Fotos:</div>
                     <div style="display:flex; gap:10px;">
@@ -345,7 +330,7 @@
             </div>
 
             <div id="coach-stats-text" class="stat-pill-grid" style="margin-bottom:20px;"></div>
-            
+
             <div class="card">
                 <h3>📸 FOTOS</h3>
                 <div class="photo-tabs">
@@ -358,22 +343,47 @@
                 </div>
             </div>
 
-            <div class="card"><h3>GRÁFICA PESO</h3><div style="height:200px; width:100%; position:relative; margin-bottom: 20px;"><canvas id="coachWeightChart"></canvas></div></div>
-            <div class="card"><h3>RUTINAS ASIGNADAS</h3><div id="coach-assigned-list"></div><label>Asignar Nueva:</label><input type="text" placeholder="🔍" id="coach-routine-filter" oninput="window.filterCoachRoutines(this.value)"><select id="coach-routine-select"></select><button class="btn" onclick="window.assignRoutine()">ENVIAR</button></div>
-            <div class="card"><h3>HISTORIAL</h3><div id="coach-history-list"></div></div>
+            <div class="card">
+                <h3>GRÁFICA PESO</h3>
+                <div style="height:200px; width:100%; position:relative; margin-bottom: 20px;"><canvas id="coachWeightChart"></canvas></div>
+            </div>
+
+            <div class="card">
+                <h3>RUTINAS ASIGNADAS</h3>
+                <div id="coach-assigned-list" style="font-size:0.8rem; color:#888; margin-bottom:15px;">Cargando...</div>
+                <label style="font-size:0.7rem; color:#ccc;">Asignar Nueva:</label>
+                <input type="text" placeholder="🔍 Buscar..." id="coach-routine-filter" style="margin-bottom:5px; padding:10px; font-size:0.9rem;" oninput="window.filterCoachRoutines(this.value)">
+                <div style="display:flex; gap:5px; margin-top:5px;">
+                    <select id="coach-routine-select" style="margin:0;"></select>
+                    <button class="btn-small btn-outline" style="width:auto; padding:0 15px;" onclick="window.goToCreateRoutine()">➕ CREAR</button>
+                    <button class="btn-small btn" style="width:auto; padding:0 15px;" onclick="window.assignRoutine()">ENVIAR</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>HISTORIAL RECIENTE</h3>
+                <div id="coach-history-list" style="max-height:300px; overflow-y:auto;"></div>
+            </div>
+
             <button class="btn-danger btn" style="width:100%; margin-bottom:30px;" onclick="window.deleteUser()">🗑️ ELIMINAR ATLETA</button>
         </section>
 
     </main>
 
-    <nav id="bottom-nav" class="bottom-nav mobile-only" style="display:none;">
-        <div class="nav-item active" id="mobile-nav-routines" onclick="window.switchTab('routines-view')">
-            <span class="nav-icon">🏋️</span>
-            <span class="nav-label">RUTINAS</span>
+    <nav id="bottom-nav" class="hidden">
+        <div id="top-btn-coach" class="top-nav-item hidden" onclick="window.loadAdminUsers(); window.switchTab('admin-view');">
+            <span class="top-icon">🛡️</span>
+            <span class="top-label" style="color:#ffaa00;">COACH</span>
         </div>
-        <div class="nav-item" id="mobile-nav-profile" onclick="window.switchTab('profile-view')">
-            <span class="nav-icon">⚙️</span>
-            <span class="nav-label">PERFIL</span>
+
+        <div id="top-btn-routines" class="top-nav-item active" onclick="window.switchTab('routines-view')">
+            <span class="top-icon">🏋️</span>
+            <span class="top-label">RUTINAS</span>
+        </div>
+
+        <div id="top-btn-profile" class="top-nav-item" onclick="window.switchTab('profile-view')">
+            <span class="top-icon">⚙️</span>
+            <span class="top-label">PERFIL</span>
         </div>
     </nav>
 
@@ -387,10 +397,13 @@
             </div>
         </div>
     </div>
+
     <div id="modal-rpe" class="modal">
         <div class="modal-content">
             <h3>FINALIZAR</h3>
-            <div style="height: 250px; width: 100%; margin-bottom: 15px;"><canvas id="muscleRadarChart"></canvas></div>
+            <div style="height: 250px; width: 100%; margin-bottom: 15px;">
+                <canvas id="muscleRadarChart"></canvas>
+            </div>
             <p style="color:#888; margin-bottom:20px;">¿Dificultad?</p>
             <button class="rpe-btn rpe-easy" onclick="window.finishWorkout('Suave')">🟢 Suave / Moderado</button>
             <button class="rpe-btn rpe-hard" onclick="window.finishWorkout('Duro')">🟠 Duro / Intenso</button>
@@ -399,6 +412,7 @@
             <button class="btn-outline" onclick="document.getElementById('modal-rpe').classList.remove('active')">Cancelar</button>
         </div>
     </div>
+
     <div id="modal-details" class="modal">
         <div class="modal-content" style="text-align:left;">
             <h3 id="detail-title" style="color:var(--accent-color); text-align:center; margin-bottom:15px;">DETALLES</h3>
@@ -406,15 +420,19 @@
             <button class="btn-outline" style="margin-top:15px;" onclick="document.getElementById('modal-details').classList.remove('active')">CERRAR</button>
         </div>
     </div>
+
     <div id="modal-progress" class="modal">
         <div class="modal-content">
             <h3>📈 EVOLUCIÓN DETALLADA</h3>
             <select id="progress-select" onchange="window.renderProgressChart(this.value)" style="margin-bottom:20px;"></select>
-            <div style="height:250px; width:100%; position:relative;"><canvas id="progressChart"></canvas></div>
+            <div style="height:250px; width:100%; position:relative;">
+                <canvas id="progressChart"></canvas>
+            </div>
             <button class="btn-outline" style="margin-top:20px;" onclick="document.getElementById('modal-progress').classList.remove('active')">CERRAR</button>
         </div>
     </div>
-    <div id="modal-video" class="modal" style="z-index: 20000;">
+
+    <div id="modal-video" class="modal" style="z-index: 3000;">
         <div class="modal-content" style="width:100%; max-width:600px; padding:10px; background:black;">
             <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden;">
                 <iframe id="youtube-frame" style="position:absolute; top:0; left:0; width:100%; height:100%;" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
