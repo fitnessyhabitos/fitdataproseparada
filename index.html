@@ -28,20 +28,20 @@
         </div>
         
         <div class="header-right">
-            <div class="desktop-nav desktop-only">
-                <div class="nav-item-header active" id="pc-nav-routines" onclick="window.switchTab('routines-view')">
+            <div class="desktop-nav">
+                <div class="nav-item-top" id="pc-btn-routines" onclick="window.switchTab('routines-view')">
                     <span class="nav-icon">🏋️</span>
                     <span class="nav-label">RUTINAS</span>
                 </div>
-                <div class="nav-item-header" id="pc-nav-profile" onclick="window.switchTab('profile-view')">
+                <div class="nav-item-top" id="pc-btn-profile" onclick="window.switchTab('profile-view')">
                     <span class="nav-icon">⚙️</span>
                     <span class="nav-label">PERFIL</span>
                 </div>
             </div>
 
-            <div id="btn-coach" class="nav-item-header hidden" onclick="window.navToCoach()">
+            <div id="btn-coach" class="nav-item-top hidden" onclick="window.navToCoach()">
                 <span class="nav-icon">🛡️</span>
-                <span class="nav-label" style="color:#ffaa00;">COACH</span>
+                <span class="nav-label coach-label">COACH</span>
             </div>
 
             <div id="notif-badge" class="notif-badge" onclick="window.dismissNotif()">🔔</div>
@@ -63,8 +63,8 @@
                 <button class="btn-outline" onclick="window.toggleAuth('register')" style="margin-top:20px;">CREAR CUENTA</button>
                 
                 <div id="install-banner" class="hidden install-box">
-                    <h4>📲 INSTALAR APP</h4>
-                    <p id="install-text"></p>
+                    <h4 style="color:var(--warning-color); margin-bottom:5px;">📲 INSTALAR APP</h4>
+                    <p id="install-text" style="color:#ccc; font-size:0.85rem;"></p>
                 </div>
             </div>
             <div id="register-form" class="hidden">
@@ -313,7 +313,7 @@
             </div>
             
             <div class="card">
-                <h3>⚙️ CONFIGURACIÓN</h3>
+                <h3>⚙️ CONFIGURACIÓN ATLETA</h3>
                 <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                     <span>Habilitar Pliegues</span>
                     <label class="switch"><input type="checkbox" id="coach-toggle-skinfolds" onchange="window.toggleUserFeature('showSkinfolds', this.checked)"><span class="slider"></span></label>
@@ -323,18 +323,39 @@
                     <label class="switch"><input type="checkbox" id="coach-toggle-measures" onchange="window.toggleUserFeature('showMeasurements', this.checked)"><span class="slider"></span></label>
                 </div>
                 <div style="display:flex; justify-content:space-between; margin-top:10px;">
-                    <span>Habilitar Vídeos</span>
+                    <span>Habilitar Vídeos (YouTube)</span>
                     <label class="switch"><input type="checkbox" id="coach-toggle-videos" onchange="window.toggleUserFeature('showVideos', this.checked)"><span class="slider"></span></label>
                 </div>
             </div>
+
             <div id="coach-view-skinfolds" class="card hidden">
-                <h3>% GRASA</h3><div style="height:200px; width:100%; position:relative;"><canvas id="coachFatChart"></canvas></div>
+                <h3>% GRASA (JP7)</h3>
+                <div style="height:200px; width:100%; position:relative;">
+                    <canvas id="coachFatChart"></canvas>
+                </div>
             </div>
+
             <div id="coach-view-measures" class="card hidden">
-                <h3>MEDIDAS</h3><div style="height:250px; width:100%; position:relative;"><canvas id="coachMeasuresChart"></canvas></div>
+                <h3>MEDIDAS (cm)</h3>
+                <div style="height:250px; width:100%; position:relative;">
+                    <canvas id="coachMeasuresChart"></canvas>
+                </div>
             </div>
+
             <div id="coach-stats-text" class="stat-pill-grid" style="margin-bottom:20px;"></div>
-            <div class="card"><h3>📸 FOTOS</h3><div id="coach-photos-container"></div></div>
+
+            <div class="card">
+                <h3>📸 FOTOS</h3>
+                <div class="photo-tabs">
+                    <div class="photo-tab active" id="coach-tab-front" onclick="window.switchCoachPose('front')">FRONTAL</div>
+                    <div class="photo-tab" id="coach-tab-back" onclick="window.switchCoachPose('back')">ESPALDA</div>
+                </div>
+                <div id="coach-photos-container"></div>
+                <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:0.7rem; color:#888;">
+                    <span id="coach-date-before">-</span><span id="coach-date-after">-</span>
+                </div>
+            </div>
+
             <div class="card"><h3>GRÁFICA PESO</h3><div style="height:200px; width:100%; position:relative; margin-bottom: 20px;"><canvas id="coachWeightChart"></canvas></div></div>
             <div class="card"><h3>RUTINAS ASIGNADAS</h3><div id="coach-assigned-list"></div><label>Asignar Nueva:</label><input type="text" placeholder="🔍" id="coach-routine-filter" oninput="window.filterCoachRoutines(this.value)"><select id="coach-routine-select"></select><button class="btn" onclick="window.assignRoutine()">ENVIAR</button></div>
             <div class="card"><h3>HISTORIAL</h3><div id="coach-history-list"></div></div>
