@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App (Menu Fix)...");
+console.log("⚡ FIT DATA: Iniciando App v14.0 (Fix Completo)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -98,8 +98,8 @@ window.enableNotifications = () => {
     }
     Notification.requestPermission().then((permission) => {
         if (permission === "granted") {
-            alert("✅ Vinculado. El reloj vibrará al acabar.");
-            new Notification("Fit Data", { body: "Prueba de conexión exitosa.", icon: "logo.png" });
+            alert("✅ Vinculado.");
+            new Notification("Fit Data", { body: "Prueba de conexión.", icon: "logo.png" });
         } else {
             alert("❌ Permiso denegado. Revisa la configuración.");
         }
@@ -113,40 +113,48 @@ window.navToCoach = () => {
     }
 };
 
-// --- GESTIÓN DE VISIBILIDAD BARRA INFERIOR ---
+// --- FUNCIÓN PARA CONTROLAR MENÚS ---
 function updateNavVisibility(isLoggedIn) {
     const bottomNav = document.getElementById('bottom-nav');
     const header = document.getElementById('main-header');
     
     if (isLoggedIn) {
-        // En login sí mostramos header y barra (si es móvil)
         header.classList.remove('hidden');
-        if(window.innerWidth < 768) {
+        if(window.innerWidth < 768 && bottomNav) {
             bottomNav.classList.remove('hidden');
             document.getElementById('main-container').style.paddingBottom = "80px";
-        } else {
-            bottomNav.classList.add('hidden');
-            document.getElementById('main-container').style.paddingBottom = "20px";
         }
     } else {
-        // No logueado: OCULTAR TODO
         header.classList.add('hidden');
-        bottomNav.classList.add('hidden');
+        if(bottomNav) bottomNav.classList.add('hidden');
         document.getElementById('main-container').style.paddingBottom = "20px";
     }
 }
 
-// --- DETECTAR MODO APP (STANDALONE) ---
+// --- DETECTAR INSTALACIÓN ---
 function checkInstallMode() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    if (!isStandalone) {
-        document.getElementById('installInstructions').classList.remove('hidden');
-    } else {
-        document.getElementById('installInstructions').classList.add('hidden');
+    const banner = document.getElementById('installInstructions');
+    if(banner) {
+        if (isStandalone) {
+            banner.classList.add('hidden');
+        } else {
+            banner.classList.remove('hidden');
+        }
     }
 }
 
+let appReady = false;
+
 onAuthStateChanged(auth, async (user) => {
+    // Timeout para limpiar pantalla de carga si algo falla
+    if (!appReady) {
+        setTimeout(() => { 
+            const loader = document.getElementById('loading-screen');
+            if(loader) loader.style.display = 'none'; 
+        }, 2000); 
+    }
+
     if(user) {
         currentUser = user;
         const snap = await getDoc(doc(db,"users",user.uid));
@@ -154,7 +162,7 @@ onAuthStateChanged(auth, async (user) => {
             userData = snap.data();
             checkPhotoReminder();
             
-            // Mostrar Botón Coach si corresponde
+            // Botón Coach
             if(userData.role === 'admin' || userData.role === 'assistant') {
                 const btn = document.getElementById('top-btn-coach');
                 if(btn) btn.classList.remove('hidden');
@@ -166,11 +174,8 @@ onAuthStateChanged(auth, async (user) => {
             }
 
             if(userData.approved){
-                setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 1500); 
-                
-                // ACTUALIZAR VISIBILIDAD MENÚS
                 updateNavVisibility(true);
-
+                
                 loadRoutines();
                 const savedW = localStorage.getItem('fit_active_workout');
                 if(savedW) {
@@ -182,23 +187,17 @@ onAuthStateChanged(auth, async (user) => {
             } else { alert("Cuenta en revisión."); signOut(auth); }
         }
     } else {
-        setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 1500);
-        switchTab('auth-view');
-        
-        // OCULTAR MENÚS EN LOGIN
         updateNavVisibility(false);
-        
-        // MOSTRAR INSTRUCCIONES SI NO ES APP
+        switchTab('auth-view');
         checkInstallMode();
     }
+    appReady = true;
 });
 
 function checkPhotoReminder() {
     if(!userData.photoDay) return;
     const now = new Date();
     const day = now.getDay();
-    const time = now.toTimeString().substr(0,5);
-    // Comparación laxa
     if(day == userData.photoDay) {
         if (Notification.permission === "granted") {
             try { new Notification("📸 FOTO", { body: "Hoy toca foto de progreso.", icon: "logo.png" }); } catch(e){}
@@ -212,26 +211,27 @@ window.switchTab = (t) => {
     document.getElementById(t).classList.add('active');
     document.getElementById('main-container').scrollTop = 0;
     
-    // Resetear activos en ambas barras
+    // Resetear activos
     const navItems = document.querySelectorAll('.top-nav-item, .nav-item');
     navItems.forEach(n => n.classList.remove('active'));
     
+    // Activar botones correspondientes
     if (t === 'routines-view') {
-        const btnTop = document.getElementById('top-btn-routines');
-        const btnBot = document.getElementById('mobile-nav-routines');
-        if(btnTop) btnTop.classList.add('active');
-        if(btnBot) btnBot.classList.add('active');
+        const btnM = document.getElementById('mobile-nav-routines');
+        if(btnM) btnM.classList.add('active');
+        const btnPC = document.getElementById('pc-btn-routines');
+        if(btnPC) btnPC.classList.add('active');
     }
     if (t === 'profile-view') {
-        const btnTop = document.getElementById('top-btn-profile');
-        const btnBot = document.getElementById('mobile-nav-profile');
-        if(btnTop) btnTop.classList.add('active');
-        if(btnBot) btnBot.classList.add('active');
+        const btnM = document.getElementById('mobile-nav-profile');
+        if(btnM) btnM.classList.add('active');
+        const btnPC = document.getElementById('pc-btn-profile');
+        if(btnPC) btnPC.classList.add('active');
         loadProfile();
     }
     if (t === 'admin-view' || t === 'coach-detail-view') {
-        const btnCoach = document.getElementById('top-btn-coach');
-        if(btnCoach) btnCoach.classList.add('active');
+        const btn = document.getElementById('top-btn-coach');
+        if(btn) btn.classList.add('active');
     }
 };
 
@@ -446,9 +446,18 @@ window.moveSlider = (v) => {
 
 window.switchCoachPose = (pose) => {
     coachCurrentPose = pose;
-    document.getElementById('coach-tab-front').classList.toggle('active', pose==='front');
-    document.getElementById('coach-tab-back').classList.toggle('active', pose==='back');
-    updateCoachPhotoDisplay(pose);
+    const tabFront = document.getElementById('coach-tab-front');
+    const tabBack = document.getElementById('coach-tab-back');
+    if(tabFront && tabBack) {
+        if(pose === 'front') {
+            tabFront.classList.add('active');
+            tabBack.classList.remove('active');
+        } else {
+            tabFront.classList.remove('active');
+            tabBack.classList.add('active');
+        }
+        updateCoachPhotoDisplay(pose);
+    }
 };
 
 function updateCoachPhotoDisplay(pose) {
@@ -541,7 +550,7 @@ window.loadProfile = async () => {
     if(chartInstance) chartInstance.destroy();
     const rawData = userData.weightHistory;
     const data = (rawData && rawData.length > 0) ? rawData : [70]; 
-    chartInstance = new Chart(ctx, { type:'line', data:{ labels:data.map((_,i)=>`T${i}`), datasets:[{label:'Kg', data:data, borderColor:'#ff3333', backgroundColor:'rgba(255,51,51,0.1)', fill:true, tension:0.4}] }, options:{plugins:{legend:{display:false}}, scales:{x:{display:false},y:{grid:{color:'#333'}}}, maintainAspectRatio:false} });
+    chartInstance = new Chart(ctx, { type:'line', data:{ labels:data.map((_,i)=>`T${i}`), datasets:[{label:'Kg', data:data, borderColor:'#ff3333', backgroundColor:'rgba(255,51,51,0.1)', fill:true, tension:0.4}] }, options:{plugins:{legend:{display:false}}, scales:{x:{display:false},y:{grid:{color:'#333'}}}, maintainAspectRatio: false}});
 
     const histDiv = document.getElementById('user-history-list'); histDiv.innerHTML = "Cargando...";
     try {
