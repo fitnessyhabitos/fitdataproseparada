@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App v12.0 (Stable Layout)...");
+console.log("⚡ FIT DATA: Iniciando App v12.1 (iOS Fixes)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -133,12 +133,12 @@ window.addEventListener('load', checkInstallPrompt);
 let appReady = false;
 
 onAuthStateChanged(auth, async (user) => {
-    // 1. BACKUP: Quitar pantalla a los 2.5s pase lo que pase
+    // Backup para quitar pantalla de carga siempre
     if (!appReady) {
         setTimeout(() => { 
             const loader = document.getElementById('loading-screen');
             if(loader) loader.style.display = 'none'; 
-        }, 2500); 
+        }, 2000); 
     }
 
     if(user) {
@@ -148,7 +148,6 @@ onAuthStateChanged(auth, async (user) => {
             userData = snap.data();
             checkPhotoReminder();
             
-            // Mostrar Botón Coach
             if(userData.role === 'admin' || userData.role === 'assistant') {
                 const btn = document.getElementById('btn-coach');
                 if(btn) btn.classList.remove('hidden');
@@ -162,7 +161,6 @@ onAuthStateChanged(auth, async (user) => {
             if(userData.approved){
                 document.getElementById('main-header').classList.remove('hidden');
                 
-                // Mostrar barra inferior en móvil
                 const bottomNav = document.getElementById('bottom-nav');
                 if(bottomNav && window.innerWidth < 768) bottomNav.style.display = 'flex';
                 
@@ -190,8 +188,7 @@ function checkPhotoReminder() {
     if(!userData.photoDay) return;
     const now = new Date();
     const day = now.getDay();
-    const time = now.toTimeString().substr(0,5);
-    // Aviso simple
+    // Comparación laxa
     if(day == userData.photoDay) {
         if (Notification.permission === "granted") {
             try { new Notification("📸 FOTO", { body: "Hoy toca foto de progreso.", icon: "logo.png" }); } catch(e){}
@@ -201,18 +198,13 @@ function checkPhotoReminder() {
 }
 
 window.switchTab = (t) => {
-    // 1. Ocultar todas las vistas
     document.querySelectorAll('.view-container').forEach(e => e.classList.remove('active'));
-    // 2. Mostrar la seleccionada
     document.getElementById(t).classList.add('active');
-    // 3. Resetear scroll
     document.getElementById('main-container').scrollTop = 0;
     
-    // 4. Actualizar botones del HEADER (nav-item-top)
-    document.querySelectorAll('.nav-item-top').forEach(n => n.classList.remove('active'));
-    
-    // 5. Actualizar botones FOOTER MÓVIL
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    // GESTIÓN DE BOTONES ACTIVOS (PC y Móvil)
+    const allNavs = document.querySelectorAll('.nav-item-top, .nav-item');
+    allNavs.forEach(n => n.classList.remove('active'));
     
     if (t === 'routines-view') {
         const btnM = document.getElementById('mobile-nav-routines');
@@ -227,10 +219,9 @@ window.switchTab = (t) => {
         if(btnPC) btnPC.classList.add('active');
         loadProfile();
     }
-    // Coach activo
     if (t === 'admin-view' || t === 'coach-detail-view') {
-        const btn = document.getElementById('btn-coach');
-        if(btn) btn.classList.add('active');
+        const btnCoach = document.getElementById('btn-coach');
+        if(btnCoach) btnCoach.classList.add('active');
     }
 };
 
@@ -445,9 +436,19 @@ window.moveSlider = (v) => {
 
 window.switchCoachPose = (pose) => {
     coachCurrentPose = pose;
-    document.getElementById('coach-tab-front').classList.toggle('active', pose==='front');
-    document.getElementById('coach-tab-back').classList.toggle('active', pose==='back');
-    updateCoachPhotoDisplay(pose);
+    // IDs correctos para el coach
+    const tabFront = document.getElementById('coach-tab-front');
+    const tabBack = document.getElementById('coach-tab-back');
+    if(tabFront && tabBack) {
+        if(pose === 'front') {
+            tabFront.classList.add('active');
+            tabBack.classList.remove('active');
+        } else {
+            tabFront.classList.remove('active');
+            tabBack.classList.add('active');
+        }
+        updateCoachPhotoDisplay(pose);
+    }
 };
 
 function updateCoachPhotoDisplay(pose) {

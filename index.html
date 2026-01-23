@@ -28,20 +28,20 @@
         </div>
         
         <div class="header-right">
-            <div id="btn-coach" class="nav-item-top hidden" onclick="window.navToCoach()">
-                <span class="nav-icon">🛡️</span>
-                <span class="nav-label coach-label">COACH</span>
-            </div>
-
             <div class="desktop-nav desktop-only">
-                <div id="pc-btn-routines" class="nav-item-top active" onclick="window.switchTab('routines-view')">
+                <div class="nav-item-header active" id="pc-btn-routines" onclick="window.switchTab('routines-view')">
                     <span class="nav-icon">🏋️</span>
                     <span class="nav-label">RUTINAS</span>
                 </div>
-                <div id="pc-btn-profile" class="nav-item-top" onclick="window.switchTab('profile-view')">
+                <div class="nav-item-header" id="pc-btn-profile" onclick="window.switchTab('profile-view')">
                     <span class="nav-icon">⚙️</span>
                     <span class="nav-label">PERFIL</span>
                 </div>
+            </div>
+
+            <div id="btn-coach-universal" class="nav-item-header hidden" onclick="window.navToCoach()">
+                <span class="nav-icon">🛡️</span>
+                <span class="nav-label coach-label">COACH</span>
             </div>
 
             <div id="notif-badge" class="notif-badge" onclick="window.dismissNotif()">🔔</div>
@@ -63,8 +63,8 @@
                 <button class="btn-outline" onclick="window.toggleAuth('register')" style="margin-top:20px;">CREAR CUENTA</button>
                 
                 <div id="install-banner" class="hidden install-box">
-                    <h4>📲 INSTALAR APP</h4>
-                    <p id="install-text"></p>
+                    <h4 style="color:var(--warning-color); margin-bottom:5px;">📲 INSTALAR APP</h4>
+                    <p id="install-text" style="color:#ccc; font-size:0.85rem;"></p>
                 </div>
             </div>
             <div id="register-form" class="hidden">
@@ -87,7 +87,8 @@
 
         <section id="routines-view" class="view-container">
             <h2>MIS RUTINAS</h2>
-            <div id="routines-list"></div> <button class="btn-float" onclick="window.openEditor()">+</button>
+            <div id="routines-list"></div>
+            <button class="btn-float" onclick="window.openEditor()">+</button>
         </section>
 
         <section id="editor-view" class="view-container">
