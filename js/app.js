@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App (Corrección Bugs)...");
+console.log("⚡ FIT DATA: Iniciando App (Versión Estable Final)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -106,7 +106,7 @@ window.enableNotifications = () => {
     });
 };
 
-// --- FUNCIÓN GLOBAL PARA NAVEGACIÓN COACH ---
+// --- NAVEGACIÓN COACH ---
 window.navToCoach = () => {
     if (userData.role === 'admin' || userData.role === 'assistant') {
         window.loadAdminUsers();
@@ -122,8 +122,9 @@ onAuthStateChanged(auth, async (user) => {
             userData = snap.data();
             checkPhotoReminder();
             
+            // Lógica Coach Button
             if(userData.role === 'admin' || userData.role === 'assistant') {
-                const btn = document.getElementById('btn-coach');
+                const btn = document.getElementById('top-btn-coach');
                 if(btn) btn.classList.remove('hidden');
             }
 
@@ -135,10 +136,6 @@ onAuthStateChanged(auth, async (user) => {
             if(userData.approved){
                 setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 2000); 
                 document.getElementById('main-header').classList.remove('hidden');
-                
-                const bottomNav = document.getElementById('bottom-nav');
-                if(bottomNav && window.innerWidth < 768) bottomNav.style.display = 'flex';
-                
                 loadRoutines();
                 const savedW = localStorage.getItem('fit_active_workout');
                 if(savedW) {
@@ -153,8 +150,6 @@ onAuthStateChanged(auth, async (user) => {
         setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 1500);
         switchTab('auth-view');
         document.getElementById('main-header').classList.add('hidden');
-        const bn = document.getElementById('bottom-nav');
-        if(bn) bn.style.display = 'none';
     }
 });
 
@@ -163,32 +158,32 @@ function checkPhotoReminder() {
     const now = new Date();
     const day = now.getDay();
     const time = now.toTimeString().substr(0,5);
-    // Comparación laxa para asegurar aviso
+    // Disparo alerta visual
     if(day == userData.photoDay) {
+         // Intento de notificación si hay permiso
+        if (Notification.permission === "granted") {
+            try { new Notification("📸 FOTO", { body: "Hoy toca foto de progreso.", icon: "logo.png" }); } catch(e){}
+        }
         alert("📸 HOY TOCA FOTO DE PROGRESO 📸");
     }
 }
 
 window.switchTab = (t) => {
-    document.querySelectorAll('.view-container').forEach(e => e.classList.remove('active'));
+    document.querySelectorAll('.view-container').forEach(e=>e.classList.remove('active'));
     document.getElementById(t).classList.add('active');
     document.getElementById('main-container').scrollTop = 0;
     
-    const navItems = document.querySelectorAll('.nav-item, .d-link');
-    navItems.forEach(n => n.classList.remove('active'));
+    // GESTIÓN DEL MENÚ SUPERIOR
+    document.querySelectorAll('.top-nav-item').forEach(n => n.classList.remove('active'));
     
-    if (t === 'routines-view') {
-        const btnM = document.getElementById('nav-routines');
-        if(btnM) btnM.classList.add('active');
-        const links = document.querySelectorAll('.d-link');
-        if(links[0]) links[0].classList.add('active');
-    }
+    if (t === 'routines-view') document.getElementById('top-btn-routines').classList.add('active');
     if (t === 'profile-view') {
-        const btnM = document.getElementById('nav-profile');
-        if(btnM) btnM.classList.add('active');
-        const links = document.querySelectorAll('.d-link');
-        if(links[1]) links[1].classList.add('active');
+        document.getElementById('top-btn-profile').classList.add('active');
         loadProfile();
+    }
+    if (t === 'admin-view' || t === 'coach-detail-view') {
+        const btnCoach = document.getElementById('top-btn-coach');
+        if(btnCoach) btnCoach.classList.add('active');
     }
 };
 
