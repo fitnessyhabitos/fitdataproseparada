@@ -2,424 +2,337 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Fit Data">
+    <meta name="apple-mobile-web-app-title" content="FIT DATA">
     <meta name="theme-color" content="#050505">
-    <title>Fit Data | High Performance</title>
-    <link rel="icon" href="favicon.ico">
-    <link rel="apple-touch-icon" href="https://fitdatatg.web.app/logo.png">
+    <title>FIT DATA - Training & Coach</title>
+    <link rel="icon" href="logo.png" type="image/png">
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="loading-screen">
-        <img src="logo.png" id="loading-logo" onerror="this.style.display='none'">
-        <div class="loading-text">SYSTEM INITIALIZED</div>
+<!-- PANTALLA DE CARGA -->
+<div id="loading-screen">
+    <img id="loading-logo" src="logo.png" alt="Loading">
+    <div class="loading-text">CARGANDO...</div>
+</div>
+
+<!-- HEADER SUPERIOR (SIEMPRE VISIBLE EN DESKTOP, SOLO COACH EN MÓVIL) -->
+<header id="main-header" class="main-header hidden">
+    <div class="brand">
+        <img class="header-logo" src="logo.png" alt="Logo">
+        <span>FIT</span>DATA
     </div>
-
-    <header id="main-header" class="hidden">
-        <div class="brand">
-            <img src="logo.png" class="header-logo" onerror="this.style.display='none'">
-            <div class="brand-text">FIT DATA <span>PRO</span></div>
+    <div class="header-actions" id="header-actions">
+        <!-- COACH (SOLO VISIBLE PARA COACH/ADMIN) - SIEMPRE EN TOP -->
+        <div id="top-btn-coach" class="top-nav-item hidden" onclick="window.switchTab('admin-view')">
+            <div class="top-icon">🏆</div>
+            <div class="top-label">Coach</div>
         </div>
         
-        <div class="header-right">
-            <nav class="desktop-nav">
-                <div class="d-link active" id="pc-nav-routines" onclick="window.switchTab('routines-view')">
-                    <span>🏋️</span> RUTINAS
-                </div>
-                <div class="d-link" id="pc-nav-profile" onclick="window.switchTab('profile-view')">
-                    <span>⚙️</span> PERFIL
-                </div>
-            </nav>
-
-            <div id="btn-coach" class="header-icon-btn hidden" onclick="window.navToCoach()">
-                <span class="top-icon">🛡️</span>
-                <span class="top-label">COACH</span>
-            </div>
-
-            <div id="notif-badge" class="notif-badge" onclick="window.dismissNotif()">🔔</div>
+        <!-- RUTINAS Y PERFIL (EN DESKTOP AQUÍ, EN MÓVIL ARRIBA A LA DERECHA) -->
+        <div id="top-btn-routines" class="top-nav-item desktop-only" onclick="window.switchTab('routines-view')">
+            <div class="top-icon">📋</div>
+            <div class="top-label">Rutinas</div>
         </div>
-    </header>
-
-    <main id="main-container">
+        <div id="top-btn-profile" class="top-nav-item desktop-only" onclick="window.switchTab('profile-view')">
+            <div class="top-icon">👤</div>
+            <div class="top-label">Perfil</div>
+        </div>
         
-        <section id="auth-view" class="view-container">
-            <div style="text-align:center; margin: 40px 0;">
-                <img src="logo.png" style="width:100px; border-radius:20px; margin-bottom:15px;" onerror="this.src='https://placehold.co/100x100?text=FD'">
-                <h1>ACCESO</h1>
-            </div>
+        <!-- NOTIFICACIÓN -->
+        <div id="notif-badge" class="notif-badge" onclick="window.dismissNotif()"></div>
+    </div>
+</header>
+
+<!-- CONTENEDOR PRINCIPAL (CON SCROLL INTERNO) -->
+<div id="main-container" class="main-container">
+    
+    <!-- AUTH VIEW -->
+    <div id="auth-view" class="view-container">
+        <div style="margin-top: 40px;">
+            
+            <!-- LOGIN FORM -->
             <div id="login-form">
-                <input type="email" id="login-email" placeholder="Email">
-                <input type="password" id="login-pass" placeholder="Contraseña">
-                <button class="btn" id="btn-login">ENTRAR</button>
-                <div class="link-text" onclick="window.recoverPass()">¿Olvidaste tu contraseña?</div>
-                <button class="btn-outline" onclick="window.toggleAuth('register')" style="margin-top:20px;">CREAR CUENTA</button>
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <img src="logo.png" style="width: 80px; border-radius: 12px; box-shadow: 0 0 20px rgba(255,51,51,0.4);">
+                    <h1 style="margin-top: 15px; font-family: 'Russo One'; letter-spacing: 2px;">FIT DATA</h1>
+                    <p style="color: #888; font-size: 0.9rem;">Entrena como un Campeón</p>
+                </div>
                 
-                <div id="install-banner" class="hidden install-box">
-                    <h4 style="color:var(--warning-color); margin-bottom:5px;">📲 INSTALAR APP</h4>
-                    <p id="install-text" style="color:#ccc; font-size:0.85rem;"></p>
-                </div>
-            </div>
-            <div id="register-form" class="hidden">
-                <input type="text" id="reg-name" placeholder="Nombre">
-                <input type="email" id="reg-email" placeholder="Email">
-                <input type="password" id="reg-pass" placeholder="Contraseña">
-                <select id="reg-gender">
-                    <option value="male">Hombre</option>
-                    <option value="female">Mujer</option>
-                </select>
-                <div style="display:flex; gap:10px;">
-                    <input type="number" id="reg-age" placeholder="Edad">
-                    <input type="number" id="reg-height" placeholder="Altura (cm)">
-                </div>
-                <input type="text" id="reg-code" placeholder="CÓDIGO SECRETO">
-                <button class="btn" id="btn-register">REGISTRARSE</button>
-                <button class="btn-outline" onclick="window.toggleAuth('login')">VOLVER</button>
-            </div>
-        </section>
-
-        <section id="routines-view" class="view-container">
-            <h2>MIS RUTINAS</h2>
-            <div id="routines-list"></div>
-            <button class="btn-float" onclick="window.openEditor()">+</button>
-        </section>
-
-        <section id="editor-view" class="view-container">
-            <div class="sticky-editor-header">
-                <h2 id="editor-title">NUEVA RUTINA</h2>
-                <div style="display:flex; gap:10px; margin-bottom:10px;">
-                    <input type="text" id="editor-name" placeholder="Nombre de Rutina" style="margin:0;">
-                    <button id="btn-save-routine" class="btn" style="width:auto; padding:0 25px;" onclick="window.saveRoutine()">GUARDAR</button>
-                </div>
-                <input type="search" id="ex-search" placeholder="🔍 Buscar ejercicio..." oninput="window.filterExercises(this.value)" style="margin-bottom:0;">
-                <div id="selected-summary" class="selected-summary"></div>
-            </div>
-            <div class="card">
-                <div id="exercise-selector-list"></div>
-            </div>
-            <button class="btn-outline" style="border-color:#666;" onclick="window.switchTab('routines-view')">CANCELAR</button>
-        </section>
-
-        <section id="profile-view" class="view-container">
-            <div class="profile-header">
-                <div class="avatar-circle" onclick="document.getElementById('file-avatar').click()">
-                    <img id="avatar-img" src="" style="display:none;">
-                    <span id="avatar-text" style="font-size:1.5rem; color:var(--accent-color);">U</span>
-                </div>
-                <input type="file" id="file-avatar" accept="image/*" class="hidden" onchange="window.uploadAvatar(this)">
-                <div style="flex:1;">
-                    <h3 id="profile-name" style="margin:0;">Cargando...</h3>
-                    <span style="color:#666; font-size:0.8rem;">Atleta de Alto Rendimiento</span>
-                </div>
-                <button class="btn-outline btn-small" style="width:auto; margin:0;" onclick="window.loadProfile()">↻</button>
-            </div>
-
-            <div class="card">
-                <h3>HISTORIAL RECIENTE</h3>
-                <div id="user-history-list" style="font-size:0.8rem; color:#888;">Cargando...</div>
-                <button class="btn-outline" style="border-color:var(--success-color); color:var(--success-color); margin-top:15px;" onclick="window.openProgress()">📈 EVOLUCIÓN DETALLADA</button>
-            </div>
-
-            <div class="card">
-                <h3>ESTADÍSTICAS TOTALES</h3>
-                <div class="stats-grid">
-                    <div class="stat-box"><span class="stat-num" id="stat-workouts">0</span><span class="stat-label">Entrenos</span></div>
-                    <div class="stat-box"><span class="stat-num" id="stat-kg">0</span><span class="stat-label">Kg Movidos</span></div>
-                    <div class="stat-box"><span class="stat-num" id="stat-sets">0</span><span class="stat-label">Series</span></div>
-                    <div class="stat-box"><span class="stat-num" id="stat-reps">0</span><span class="stat-label">Reps</span></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>MAPA MUSCULAR</h3>
-                <div id="heatmap-container"></div>
-            </div>
-
-            <div class="card">
-                <h3>EVOLUCIÓN FÍSICA</h3>
-                <div class="tip-box">💡 TIP: Usa siempre la misma luz, ropa y lugar.</div>
-                <div class="photo-tabs">
-                    <div class="photo-tab active" id="tab-front" onclick="window.switchPose('front')">👤 FRONTAL</div>
-                    <div class="photo-tab" id="tab-back" onclick="window.switchPose('back')">🛡️ ESPALDA</div>
-                </div>
-                <div class="compare-wrapper">
-                    <div class="slider-labels"><span class="label-tag">ANTES</span><span class="label-tag">AHORA</span></div>
-                    <img src="" id="img-before" class="compare-img">
-                    <img src="" id="img-overlay" class="compare-img img-overlay">
-                    <div class="slider-handle" id="slider-handle"><div class="slider-btn"></div></div>
-                </div>
-                <input type="range" min="0" max="100" value="0" style="width:100%; margin-top:15px;" oninput="window.moveSlider(this.value)">
-                <div class="photo-actions">
-                    <button class="btn-outline" style="margin:0;" onclick="document.getElementById('f-before').click()">1. ANTES</button>
-                    <button class="btn-danger btn-small" style="margin:0;" onclick="window.deletePhoto('before')">🗑️</button>
-                    <button class="btn-outline" style="margin:0;" onclick="document.getElementById('f-after').click()">2. AHORA</button>
-                    <button class="btn-danger btn-small" style="margin:0;" onclick="window.deletePhoto('after')">🗑️</button>
-                </div>
-                <input type="file" id="f-before" class="hidden" accept="image/*" onchange="window.loadCompImg(this,'before')">
-                <input type="file" id="f-after" class="hidden" accept="image/*" onchange="window.loadCompImg(this,'after')">
-                <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:0.6rem; color:#888;">
-                    <span id="date-before">-</span><span id="date-after">-</span>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>PESO CORPORAL</h3>
-                <div style="height:200px; position:relative; margin-bottom:10px;"><canvas id="weightChart"></canvas></div>
-                <button class="btn-outline" onclick="window.addWeightEntry()">+ REGISTRAR PESO</button>
-            </div>
-
-            <div id="user-skinfolds-section" class="card hidden">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h3 style="margin:0;">🤏 PLIEGUES (% GRASA)</h3>
-                    <button class="btn-small btn-outline" style="width:auto; padding:2px 8px; margin:0;" onclick="window.toggleElement('img-pliegues')">ℹ️ Guía</button>
-                </div>
-                <img id="img-pliegues" src="pliegues.png" class="hidden" style="width:100%; border-radius:8px; margin-bottom:15px; border:1px solid #333;">
-                <div style="height:200px; width:100%; position:relative; margin-bottom:15px;"><canvas id="chartFat"></canvas></div>
-                <div class="measure-grid">
-                    <input type="number" id="p-chest" placeholder="Pecho">
-                    <input type="number" id="p-axilla" placeholder="Axilar">
-                    <input type="number" id="p-tricep" placeholder="Tríceps">
-                    <input type="number" id="p-subscap" placeholder="Subescapular">
-                    <input type="number" id="p-abdo" placeholder="Abdomen">
-                    <input type="number" id="p-supra" placeholder="Suprailiaco">
-                    <input type="number" id="p-thigh" placeholder="Muslo">
-                </div>
-                <button class="btn-small btn-outline" onclick="window.calculateAndSaveSkinfolds()">CALCULAR Y GUARDAR</button>
-            </div>
-
-            <div id="user-measures-section" class="card hidden">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h3 style="margin:0;">📏 MEDIDAS (cm)</h3>
-                    <button class="btn-small btn-outline" style="width:auto; padding:2px 8px; margin:0;" onclick="window.toggleElement('img-medidas')">ℹ️ Guía</button>
-                </div>
-                <img id="img-medidas" src="medidas.png" class="hidden" style="width:100%; border-radius:8px; margin-bottom:15px; border:1px solid #333;">
-                <div style="height:250px; width:100%; position:relative; margin-bottom:15px;"><canvas id="chartMeasures"></canvas></div>
-                <div class="measure-grid">
-                    <input type="number" id="m-chest" placeholder="Pecho">
-                    <input type="number" id="m-waist" placeholder="Cintura">
-                    <input type="number" id="m-hip" placeholder="Cadera">
-                    <input type="number" id="m-arm" placeholder="Brazo">
-                    <input type="number" id="m-thigh" placeholder="Muslo">
-                    <input type="number" id="m-calf" placeholder="Gemelo">
-                    <input type="number" id="m-shoulder" placeholder="Hombros">
-                </div>
-                <button class="btn-small btn-outline" onclick="window.saveMeasurements()">GUARDAR MEDIDAS</button>
-            </div>
-
-            <div class="card">
-                <h3>CONFIGURACIÓN</h3>
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span>Mostrar Pliegues</span>
-                    <label class="switch"><input type="checkbox" id="cfg-show-skinfolds" onchange="window.saveSelfConfig('showSkinfolds', this.checked)"><span class="slider"></span></label>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span>Mostrar Medidas</span>
-                    <label class="switch"><input type="checkbox" id="cfg-show-measures" onchange="window.saveSelfConfig('showMeasurements', this.checked)"><span class="slider"></span></label>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                     <span>Tiempo Descanso (s)</span>
-                     <input type="number" id="cfg-rest-time" style="width:80px; margin:0; text-align:center;" value="60">
-                </div>
-                <div style="margin-bottom:15px; padding-top:10px; border-top:1px solid #333;">
-                    <button class="btn-small btn-outline" style="width:100%; border-color:#444;" onclick="window.enableNotifications()">⌚ VINCULAR NOTIFICACIONES</button>
-                    <p style="font-size:0.65rem; color:#666; text-align:center; margin-top:5px;">Para que vibre el reloj al acabar el descanso</p>
-                </div>
-                <div style="margin-bottom:15px;">
-                    <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">Recordatorio Fotos:</div>
-                    <div style="display:flex; gap:10px;">
-                        <select id="photo-day" style="margin:0;">
-                            <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option>
-                            <option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="0">Domingo</option>
-                        </select>
-                        <input type="time" id="photo-time" value="09:00" style="margin:0;">
-                        <button class="btn-small btn" onclick="window.savePhotoReminder()">OK</button>
-                    </div>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
-                    <span>Sonido (5 Beeps)</span>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        <button class="btn-small btn-outline" style="margin:0; padding:2px 8px; font-size:0.7rem;" onclick="window.testSound()">🔊 PROBAR</button>
-                        <label class="switch"><input type="checkbox" id="cfg-sound" checked><span class="slider"></span></label>
-                    </div>
-                </div>
-                <div style="display:flex; justify-content:space-between;">
-                    <span>Pantalla Activa</span><label class="switch"><input type="checkbox" id="cfg-wake" checked><span class="slider"></span></label>
-                </div>
-                <button class="btn-outline" style="margin-top:15px;" onclick="window.saveConfig()">GUARDAR AJUSTES</button>
-            </div>
-
-            <button class="btn-outline" style="border-color:#500; color:#f55; margin-bottom:20px;" onclick="window.logout()">CERRAR SESIÓN</button>
-        </section>
-
-        <section id="workout-view" class="view-container">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; position:sticky; top:0; background:var(--bg-color); z-index:10; padding:10px 0; border-bottom:1px solid #222;">
-                <button onclick="window.switchTab('routines-view')" style="background:none; border:none; color:#666; font-size:1.5rem;">✕</button>
-                <div style="text-align:center;">
-                    <span style="font-size:0.6rem; color:#666;">TIEMPO</span><br>
-                    <span id="mini-timer" style="color:var(--accent-color); font-weight:bold;">00:00</span>
-                </div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <button class="btn-danger btn-small" style="margin:0; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px;" onclick="window.cancelWorkout()">🗑️</button>
-                    <button class="btn-small btn" style="margin:0;" onclick="window.promptRPE()">TERMINAR</button>
-                </div>
-            </div>
-            <h2 id="workout-title" style="margin-bottom:20px;">Entreno</h2>
-            <div id="workout-exercises"></div>
-        </section>
-
-        <section id="admin-view" class="view-container">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h2>PANEL COACH</h2>
-                <button class="btn-small btn-outline" style="width:auto; margin:0;" onclick="window.loadAdminUsers()">🔄</button>
-            </div>
-            <div class="admin-tabs">
-                <div id="tab-users" class="admin-tab-btn active" onclick="window.toggleAdminMode('users')">👥 ATLETAS</div>
-                <div id="tab-lib" class="admin-tab-btn" onclick="window.toggleAdminMode('lib')">📚 LIBRERÍA</div>
-            </div>
-            <div class="card" id="admin-users-card">
-                <h3>Lista de Atletas</h3>
-                <div id="admin-list"></div>
-            </div>
-            <div class="card hidden" id="admin-lib-card">
-                <h3>Todas las Rutinas</h3>
-                <div id="admin-lib-list"></div>
-            </div>
-            <button class="btn-outline" onclick="window.switchTab('routines-view')">VOLVER</button>
-        </section>
-
-        <section id="coach-detail-view" class="view-container">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <button class="btn-outline btn-small" style="width:auto; margin:0;" onclick="window.switchTab('admin-view')">← VOLVER</button>
-                <h3 style="margin:0;">FICHA ATLETA</h3>
-            </div>
-            <div style="text-align:center; margin-bottom:20px;">
-                <div class="avatar-circle" style="width:80px; height:80px; margin:0 auto 10px auto;">
-                    <img id="coach-user-img" src="" style="display:none;">
-                    <span id="coach-user-initial" style="font-size:2rem; color:var(--accent-color);">U</span>
-                </div>
-                <h2 id="coach-user-name" style="margin:0;">Usuario</h2>
-                <p id="coach-user-email" style="color:#666; font-size:0.8rem;"></p>
-                <div id="coach-user-meta" style="color:#888; font-size:0.7rem; margin-top:5px;"></div>
-                <div id="pending-approval-banner" class="hidden" style="margin-top:15px;">
-                    <button class="btn btn-success" onclick="window.approveUser()">✅ APROBAR ACCESO</button>
-                </div>
+                <input type="email" id="login-email" placeholder="Tu email" required>
+                <input type="password" id="login-password" placeholder="Contraseña" required>
+                <button class="btn" onclick="window.handleLogin()">ENTRAR</button>
+                <button class="btn-outline" onclick="window.toggleAuth('register')">¿Sin cuenta? Regístrate</button>
+                <div class="link-text" onclick="window.recoverPass()">¿Olvidaste la contraseña?</div>
             </div>
             
-            <div class="card">
-                <h3>⚙️ CONFIGURACIÓN ATLETA</h3>
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span>Habilitar Pliegues</span>
-                    <label class="switch"><input type="checkbox" id="coach-toggle-skinfolds" onchange="window.toggleUserFeature('showSkinfolds', this.checked)"><span class="slider"></span></label>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span>Habilitar Medidas</span>
-                    <label class="switch"><input type="checkbox" id="coach-toggle-measures" onchange="window.toggleUserFeature('showMeasurements', this.checked)"><span class="slider"></span></label>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-top:10px;">
-                    <span>Habilitar Vídeos (YouTube)</span>
-                    <label class="switch"><input type="checkbox" id="coach-toggle-videos" onchange="window.toggleUserFeature('showVideos', this.checked)"><span class="slider"></span></label>
-                </div>
-            </div>
-
-            <div id="coach-view-skinfolds" class="card hidden">
-                <h3>% GRASA (JP7)</h3>
-                <div style="height:200px; width:100%; position:relative;">
-                    <canvas id="coachFatChart"></canvas>
-                </div>
-            </div>
-
-            <div id="coach-view-measures" class="card hidden">
-                <h3>MEDIDAS (cm)</h3>
-                <div style="height:250px; width:100%; position:relative;">
-                    <canvas id="coachMeasuresChart"></canvas>
-                </div>
-            </div>
-
-            <div id="coach-stats-text" class="stat-pill-grid" style="margin-bottom:20px;"></div>
-
-            <div class="card">
-                <h3>📸 FOTOS</h3>
-                <div class="photo-tabs">
-                    <div class="photo-tab active" id="coach-tab-front" onclick="window.switchCoachPose('front')">FRONTAL</div>
-                    <div class="photo-tab" id="coach-tab-back" onclick="window.switchCoachPose('back')">ESPALDA</div>
-                </div>
-                <div id="coach-photos-container"></div>
-                <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:0.7rem; color:#888;">
-                    <span id="coach-date-before">-</span><span id="coach-date-after">-</span>
-                </div>
-            </div>
-
-            <div class="card"><h3>GRÁFICA PESO</h3><div style="height:200px; width:100%; position:relative; margin-bottom: 20px;"><canvas id="coachWeightChart"></canvas></div></div>
-            <div class="card"><h3>RUTINAS ASIGNADAS</h3><div id="coach-assigned-list"></div><label>Asignar Nueva:</label><input type="text" placeholder="🔍" id="coach-routine-filter" oninput="window.filterCoachRoutines(this.value)"><select id="coach-routine-select"></select><button class="btn" onclick="window.assignRoutine()">ENVIAR</button></div>
-            <div class="card"><h3>HISTORIAL</h3><div id="coach-history-list"></div></div>
-            <button class="btn-danger btn" style="width:100%; margin-bottom:30px;" onclick="window.deleteUser()">🗑️ ELIMINAR ATLETA</button>
-        </section>
-
-    </main>
-
-    <nav class="bottom-nav" id="bottom-nav">
-        <div class="nav-item active" id="mobile-nav-routines" onclick="window.switchTab('routines-view')">
-            <span class="nav-icon">🏋️</span>
-            <span class="nav-label">RUTINAS</span>
-        </div>
-        <div class="nav-item" id="mobile-nav-profile" onclick="window.switchTab('profile-view')">
-            <span class="nav-icon">⚙️</span>
-            <span class="nav-label">PERFIL</span>
-        </div>
-    </nav>
-
-    <div id="modal-timer" class="modal">
-        <div class="modal-content">
-            <h3 style="color:var(--success-color)">DESCANSO</h3>
-            <div id="timer-display" style="font-size:5rem; font-weight:900; color:white; margin:20px 0;">60</div>
-            <div style="display:flex; gap:15px; justify-content:center;">
-                <button class="btn-outline" onclick="window.addRestTime(20)">+20s</button>
-                <button class="btn" onclick="window.closeTimer()">OMITIR</button>
+            <!-- REGISTER FORM -->
+            <div id="register-form" class="hidden">
+                <h2 style="text-align: center; margin-bottom: 20px;">CREAR CUENTA</h2>
+                <input type="email" id="register-email" placeholder="Tu email" required>
+                <input type="password" id="register-password" placeholder="Contraseña" required>
+                <input type="password" id="register-confirm" placeholder="Confirmar contraseña" required>
+                <select id="register-role">
+                    <option value="athlete">Atleta</option>
+                    <option value="coach">Coach</option>
+                </select>
+                <button class="btn" onclick="window.handleRegister()">REGISTRARSE</button>
+                <button class="btn-outline" onclick="window.toggleAuth('login')">Ya tengo cuenta</button>
             </div>
         </div>
     </div>
-    <div id="modal-rpe" class="modal">
-        <div class="modal-content">
-            <h3>FINALIZAR</h3>
-            <div style="height: 250px; width: 100%; margin-bottom: 15px;"><canvas id="muscleRadarChart"></canvas></div>
-            <p style="color:#888; margin-bottom:20px;">¿Dificultad?</p>
-            <button class="rpe-btn rpe-easy" onclick="window.finishWorkout('Suave')">🟢 Suave / Moderado</button>
-            <button class="rpe-btn rpe-hard" onclick="window.finishWorkout('Duro')">🟠 Duro / Intenso</button>
-            <button class="rpe-btn rpe-max" onclick="window.finishWorkout('Fallo')">🔴 Fallo / Extremo</button>
-            <textarea id="workout-notes" rows="3" placeholder="📝 Notas..." style="width:100%; background:#222; border:1px solid #333; color:white; border-radius:8px; padding:10px; margin-top:10px; font-family:inherit;"></textarea>
-            <button class="btn-outline" onclick="document.getElementById('modal-rpe').classList.remove('active')">Cancelar</button>
-        </div>
+    
+    <!-- ROUTINES VIEW -->
+    <div id="routines-view" class="view-container">
+        <h2 style="margin-bottom: 20px;">MIS RUTINAS</h2>
+        <button class="btn" onclick="window.openEditor()" style="margin-bottom: 20px;">+ NUEVA RUTINA</button>
+        <div id="routines-list">Cargando...</div>
     </div>
-    <div id="modal-details" class="modal">
-        <div class="modal-content" style="text-align:left;">
-            <h3 id="detail-title" style="color:var(--accent-color); text-align:center; margin-bottom:15px;">DETALLES</h3>
-            <div id="detail-content" style="font-size:0.85rem; max-height:60vh; overflow-y:auto;"></div>
-            <button class="btn-outline" style="margin-top:15px;" onclick="document.getElementById('modal-details').classList.remove('active')">CERRAR</button>
-        </div>
-    </div>
-    <div id="modal-progress" class="modal">
-        <div class="modal-content">
-            <h3>📈 EVOLUCIÓN DETALLADA</h3>
-            <select id="progress-select" onchange="window.renderProgressChart(this.value)" style="margin-bottom:20px;"></select>
-            <div style="height:250px; width:100%; position:relative;"><canvas id="progressChart"></canvas></div>
-            <button class="btn-outline" style="margin-top:20px;" onclick="document.getElementById('modal-progress').classList.remove('active')">CERRAR</button>
-        </div>
-    </div>
-    <div id="modal-video" class="modal" style="z-index: 20000;">
-        <div class="modal-content" style="width:100%; max-width:600px; padding:10px; background:black;">
-            <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden;">
-                <iframe id="youtube-frame" style="position:absolute; top:0; left:0; width:100%; height:100%;" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    
+    <!-- PROFILE VIEW -->
+    <div id="profile-view" class="view-container">
+        <h2 style="margin-bottom: 20px;">👤 MI PERFIL</h2>
+        <div class="profile-header">
+            <div class="avatar-circle">
+                <img id="profile-avatar" src="logo.png" alt="Avatar">
             </div>
-            <button class="btn-danger" style="margin-top:10px; width:100%;" onclick="window.closeVideo()">CERRAR VÍDEO</button>
+            <div>
+                <div id="profile-name" style="font-size: 1.2rem; font-weight: bold;">Atleta de Alto Rendimiento</div>
+                <div id="profile-role" style="color: #888; font-size: 0.9rem;">Cargando...</div>
+            </div>
+        </div>
+        
+        <h3>HISTORIAL RECIENTE</h3>
+        <div id="history-list">Cargando...</div>
+        
+        <h3 style="margin-top: 25px;">ESTADÍSTICAS TOTALES</h3>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span class="stat-num" id="stat-workouts">0</span>
+                <span class="stat-label">Entrenos</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-num" id="stat-kg">0</span>
+                <span class="stat-label">Kg Movidos</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-num" id="stat-series">0</span>
+                <span class="stat-label">Series</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-num" id="stat-reps">0</span>
+                <span class="stat-label">Reps</span>
+            </div>
+        </div>
+        
+        <h3 style="margin-top: 25px;">MAPA MUSCULAR</h3>
+        <div id="muscle-chart-container"></div>
+        
+        <h3 style="margin-top: 25px;">EVOLUCIÓN FÍSICA</h3>
+        <div class="tip-box">💡 TIP: Usa siempre la misma luz, ropa y lugar.</div>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button class="btn-outline" style="width: 100%; margin: 0; padding: 8px;" onclick="window.switchPhotoTab('front')">👤 FRONTAL</button>
+            <button class="btn-outline" style="width: 100%; margin: 0; padding: 8px;" onclick="window.switchPhotoTab('back')">🛡️ ESPALDA</button>
+        </div>
+        <div id="photo-comparison"></div>
+        
+        <h3 style="margin-top: 25px;">PESO CORPORAL</h3>
+        <div id="weight-chart-container"></div>
+        
+        <h3 style="margin-top: 25px;">CONFIGURACIÓN</h3>
+        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <span>Mostrar Pliegues</span>
+            <div class="switch">
+                <input type="checkbox" id="show-skinfolds" onchange="window.updateUserSettings()">
+                <span class="slider"></span>
+            </div>
+        </label>
+        
+        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <span>Mostrar Medidas</span>
+            <div class="switch">
+                <input type="checkbox" id="show-measures" onchange="window.updateUserSettings()">
+                <span class="slider"></span>
+            </div>
+        </label>
+        
+        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <span>Tiempo Descanso (s)</span>
+            <input type="number" id="rest-time" min="10" max="600" style="width: 80px; margin: 0;" onchange="window.updateUserSettings()">
+        </label>
+        
+        <div class="tip-box" style="margin-top: 10px;">Para que vibre el reloj al acabar el descanso</div>
+        
+        <label style="display: flex; align-items: center; gap: 10px; margin: 15px 0;">
+            <span>Recordatorio Fotos:</span>
+            <select id="photo-day" style="flex: 1; margin: 0;" onchange="window.updateUserSettings()">
+                <option value="">Desactivado</option>
+                <option value="0">Domingo</option>
+                <option value="1">Lunes</option>
+                <option value="2">Martes</option>
+                <option value="3">Miércoles</option>
+                <option value="4">Jueves</option>
+                <option value="5">Viernes</option>
+                <option value="6">Sábado</option>
+            </select>
+        </label>
+        
+        <label style="display: flex; align-items: center; gap: 10px; margin: 15px 0;">
+            <span>Hora:</span>
+            <input type="time" id="photo-time" style="flex: 1; margin: 0;" onchange="window.updateUserSettings()">
+        </label>
+        
+        <label style="display: flex; align-items: center; gap: 10px; margin: 15px 0;">
+            <span>Sonido (5 Beeps)</span>
+            <div class="switch">
+                <input type="checkbox" id="enable-sound" checked>
+                <span class="slider"></span>
+            </div>
+        </label>
+        
+        <label style="display: flex; align-items: center; gap: 10px; margin: 15px 0;">
+            <span>Pantalla Activa</span>
+            <div class="switch">
+                <input type="checkbox" id="keep-awake" onchange="window.toggleWakeLock()">
+                <span class="slider"></span>
+            </div>
+        </label>
+        
+        <button class="btn" onclick="window.enableNotifications()" style="margin-top: 20px;">🔔 ACTIVAR NOTIFICACIONES</button>
+        <button class="btn btn-danger" onclick="window.logout()" style="margin-top: 20px;">CERRAR SESIÓN</button>
+    </div>
+    
+    <!-- WORKOUT VIEW -->
+    <div id="workout-view" class="view-container">
+        <div style="text-align: center; margin-bottom: 15px;">
+            <div style="font-size: 2rem; font-weight: bold; color: var(--accent-color);">
+                <span id="timer-main">00:00</span>
+            </div>
+            <div style="font-size: 0.9rem; color: #888; margin-top: 5px;">
+                REST: <span id="rest-counter">00:00</span>
+            </div>
+        </div>
+        <div id="workout-content"></div>
+    </div>
+    
+    <!-- EDITOR VIEW -->
+    <div id="editor-view" class="view-container">
+        <div class="sticky-editor-header">
+            <h2 id="editor-title" style="text-align: center;">NUEVA RUTINA</h2>
+        </div>
+        <input type="text" id="editor-name" placeholder="Nombre de la rutina" style="margin-bottom: 15px;">
+        
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: bold;">Buscar Ejercicios</label>
+            <input type="text" placeholder="Escribe para buscar..." onkeyup="window.filterExercises(this.value)">
+        </div>
+        
+        <div id="selected-summary" class="selected-summary"></div>
+        
+        <h3 style="margin: 20px 0 10px 0;">EJERCICIOS DISPONIBLES</h3>
+        <div id="exercise-selector-list">Cargando...</div>
+        
+        <button class="btn btn-success" onclick="window.saveRoutine()" style="margin-top: 20px;">GUARDAR RUTINA</button>
+        <button class="btn-outline" onclick="window.switchTab('routines-view')" style="margin-top: 10px;">VOLVER</button>
+    </div>
+    
+    <!-- ADMIN VIEW (PANEL COACH) -->
+    <div id="admin-view" class="view-container">
+        <h2 style="margin-bottom: 20px;">🏆 PANEL COACH</h2>
+        
+        <div class="admin-tabs">
+            <button class="admin-tab-btn active" onclick="window.switchAdminTab('athletes')">👥 ATLETAS</button>
+            <button class="admin-tab-btn" onclick="window.switchAdminTab('library')">📚 LIBRERÍA</button>
+        </div>
+        
+        <div id="athletes-tab" class="admin-tab-content active">
+            <h3>Lista de Atletas</h3>
+            <div id="athletes-list">Cargando...</div>
+        </div>
+        
+        <div id="library-tab" class="admin-tab-content hidden">
+            <h3>Librería de Rutinas</h3>
+            <div id="library-list">Cargando...</div>
         </div>
     </div>
+    
+    <!-- COACH DETAIL VIEW -->
+    <div id="coach-detail-view" class="view-container">
+        <button class="btn-outline" onclick="window.switchTab('admin-view')" style="margin-bottom: 15px;">← VOLVER</button>
+        
+        <div class="profile-header">
+            <div class="avatar-circle">
+                <img id="coach-detail-avatar" src="logo.png" alt="Avatar">
+            </div>
+            <div>
+                <div id="coach-detail-name" style="font-size: 1.2rem; font-weight: bold;">Nombre Atleta</div>
+                <div id="coach-detail-email" style="color: #888; font-size: 0.9rem;">email@example.com</div>
+            </div>
+        </div>
+        
+        <h3>⚙️ CONFIGURACIÓN ATLETA</h3>
+        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <span>Habilitar Pliegues</span>
+            <div class="switch">
+                <input type="checkbox" id="coach-skinfolds" onchange="window.updateCoachUserSettings()">
+                <span class="slider"></span>
+            </div>
+        </label>
+        
+        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <span>Habilitar Medidas</span>
+            <div class="switch">
+                <input type="checkbox" id="coach-measures" onchange="window.updateCoachUserSettings()">
+                <span class="slider"></span>
+            </div>
+        </label>
+        
+        <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <span>Habilitar Vídeos (YouTube)</span>
+            <div class="switch">
+                <input type="checkbox" id="coach-videos" onchange="window.updateCoachUserSettings()">
+                <span class="slider"></span>
+            </div>
+        </label>
+        
+        <h3 style="margin-top: 25px;">📸 FOTOS</h3>
+        <div class="coach-photos-row">
+            <div class="coach-photo-box">
+                <img id="coach-photo-front" src="logo.png" alt="Frontal">
+                <div class="photo-date-label" id="coach-photo-front-date"></div>
+            </div>
+            <div class="coach-photo-box">
+                <img id="coach-photo-back" src="logo.png" alt="Espalda">
+                <div class="photo-date-label" id="coach-photo-back-date"></div>
+            </div>
+        </div>
+        
+        <h3 style="margin-top: 25px;">GRÁFICA PESO</h3>
+        <div id="coach-weight-chart"></div>
+        
+        <h3 style="margin-top: 25px;">RUTINAS ASIGNADAS</h3>
+        <div id="coach-assigned-routines">Cargando...</div>
+    </div>
+    
+</div>
 
-    <script type="module" src="js/app.js"></script>
+<!-- BARRA INFERIOR (MÓVIL) - CON SAFE AREA INSET -->
+<nav id="bottom-nav" class="bottom-nav mobile-only">
+    <div class="bottom-nav-item" onclick="window.switchTab('routines-view')">
+        <div class="bottom-icon">📋</div>
+        <div class="bottom-label">Rutinas</div>
+    </div>
+    <div class="bottom-nav-item" onclick="window.switchTab('profile-view')">
+        <div class="bottom-icon">👤</div>
+        <div class="bottom-label">Perfil</div>
+    </div>
+</nav>
 
+<script type="module" src="app.js"></script>
 </body>
 </html>
