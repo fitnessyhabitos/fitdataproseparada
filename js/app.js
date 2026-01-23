@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App v10.1 (Stable IOS)...");
+console.log("⚡ FIT DATA: Iniciando App v10.1 (Stable)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -98,10 +98,10 @@ window.enableNotifications = () => {
     }
     Notification.requestPermission().then((permission) => {
         if (permission === "granted") {
-            alert("✅ Vinculado. El reloj vibrará al acabar.");
-            new Notification("Fit Data", { body: "Prueba de conexión exitosa.", icon: "logo.png" });
+            alert("✅ Vinculado.");
+            new Notification("Fit Data", { body: "Prueba correcta.", icon: "logo.png" });
         } else {
-            alert("❌ Permiso denegado. Revisa la configuración.");
+            alert("❌ Permiso denegado.");
         }
     });
 };
@@ -129,10 +129,13 @@ function checkInstallPrompt() {
 }
 window.addEventListener('load', checkInstallPrompt);
 
-// --- CORRECCIÓN CARGA IOS: TIMEOUT DE SEGURIDAD ---
+// --- FIX CARGA IOS: Limpieza segura ---
 onAuthStateChanged(auth, async (user) => {
-    // Timeout para quitar pantalla de carga pase lo que pase
-    setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 3000);
+    // Forzamos quitar el loader tras 2.5s pase lo que pase
+    setTimeout(() => { 
+        const loader = document.getElementById('loading-screen');
+        if(loader) loader.classList.add('hidden'); 
+    }, 2500);
 
     if(user) {
         currentUser = user;
@@ -142,7 +145,7 @@ onAuthStateChanged(auth, async (user) => {
             checkPhotoReminder();
             
             if(userData.role === 'admin' || userData.role === 'assistant') {
-                const btn = document.getElementById('btn-coach');
+                const btn = document.getElementById('top-btn-coach');
                 if(btn) btn.classList.remove('hidden');
             }
 
@@ -153,10 +156,6 @@ onAuthStateChanged(auth, async (user) => {
 
             if(userData.approved){
                 document.getElementById('main-header').classList.remove('hidden');
-                
-                const bottomNav = document.getElementById('bottom-nav');
-                if(bottomNav && window.innerWidth < 768) bottomNav.style.display = 'flex';
-                
                 loadRoutines();
                 const savedW = localStorage.getItem('fit_active_workout');
                 if(savedW) {
@@ -170,8 +169,6 @@ onAuthStateChanged(auth, async (user) => {
     } else {
         switchTab('auth-view');
         document.getElementById('main-header').classList.add('hidden');
-        const bn = document.getElementById('bottom-nav');
-        if(bn) bn.style.display = 'none';
         checkInstallPrompt();
     }
 });
@@ -180,14 +177,15 @@ function checkPhotoReminder() {
     if(!userData.photoDay) return;
     const now = new Date();
     const day = now.getDay();
-    // Aviso simple
+    const time = now.toTimeString().substr(0,5);
+    // Comparación laxa y aviso visual
     if(day == userData.photoDay) {
         // Intento notificación
         if (Notification.permission === "granted") {
             try { new Notification("📸 FOTO", { body: "Hoy toca foto de progreso.", icon: "logo.png" }); } catch(e){}
         }
-        // Fallback alerta visual
-        alert("📸 HOY TOCA FOTO DE PROGRESO 📸");
+        // Fallback visual importante
+        alert("⚠️ RECORDATORIO: Hoy toca subir foto de progreso.");
     }
 }
 
@@ -196,21 +194,24 @@ window.switchTab = (t) => {
     document.getElementById(t).classList.add('active');
     document.getElementById('main-container').scrollTop = 0;
     
-    const navItems = document.querySelectorAll('.nav-item, .d-link');
-    navItems.forEach(n => n.classList.remove('active'));
+    // GESTIÓN DEL MENÚ SUPERIOR
+    document.querySelectorAll('.nav-item-top').forEach(n => n.classList.remove('active'));
     
     if (t === 'routines-view') {
-        const btnM = document.getElementById('nav-routines');
-        if(btnM) btnM.classList.add('active');
-        const links = document.querySelectorAll('.d-link');
-        if(links[0]) links[0].classList.add('active');
+        const btn = document.getElementById('top-btn-routines');
+        if(btn) btn.classList.add('active');
     }
     if (t === 'profile-view') {
-        const btnM = document.getElementById('nav-profile');
-        if(btnM) btnM.classList.add('active');
-        const links = document.querySelectorAll('.d-link');
-        if(links[1]) links[1].classList.add('active');
-        loadProfile();
+        const btn = document.getElementById('top-btn-profile');
+        if(btn) {
+            btn.classList.add('active');
+            loadProfile();
+        }
+    }
+    // Coach activo
+    if (t === 'admin-view' || t === 'coach-detail-view') {
+        const btn = document.getElementById('top-btn-coach');
+        if(btn) btn.classList.add('active');
     }
 };
 
@@ -423,11 +424,23 @@ window.moveSlider = (v) => {
     document.getElementById('slider-handle').style.left = `${v}%`; 
 };
 
+// --- FIX FOTOS COACH: Función específica para el cambio de pestañas en Coach View ---
 window.switchCoachPose = (pose) => {
     coachCurrentPose = pose;
-    document.getElementById('coach-tab-front').classList.toggle('active', pose==='front');
-    document.getElementById('coach-tab-back').classList.toggle('active', pose==='back');
-    updateCoachPhotoDisplay(pose);
+    // Asegurar que usamos los IDs correctos del HTML de Coach
+    const tabFront = document.getElementById('coach-tab-front');
+    const tabBack = document.getElementById('coach-tab-back');
+    
+    if(tabFront && tabBack) {
+        if(pose === 'front') {
+            tabFront.classList.add('active');
+            tabBack.classList.remove('active');
+        } else {
+            tabFront.classList.remove('active');
+            tabBack.classList.add('active');
+        }
+        updateCoachPhotoDisplay(pose);
+    }
 };
 
 function updateCoachPhotoDisplay(pose) {

@@ -27,21 +27,23 @@
             <div class="brand-text">FIT DATA <span>PRO</span></div>
         </div>
         
-        <div class="header-right">
-            <nav class="desktop-nav">
-                <div class="d-link active" id="d-nav-routines" onclick="window.switchTab('routines-view')">
-                    <span>🏋️</span> RUTINAS
-                </div>
-                <div class="d-link" id="d-nav-profile" onclick="window.switchTab('profile-view')">
-                    <span>⚙️</span> PERFIL
-                </div>
-            </nav>
-
-            <div id="btn-coach" class="header-icon-btn hidden" onclick="window.navToCoach()">
-                <span class="top-icon">🛡️</span>
-                <span class="top-label">COACH</span>
+        <div class="header-menu">
+            
+            <div id="top-btn-coach" class="nav-item-top hidden" onclick="window.navToCoach()">
+                <span class="nav-icon">🛡️</span>
+                <span class="nav-label coach-text">COACH</span>
             </div>
 
+            <div id="top-btn-routines" class="nav-item-top active" onclick="window.switchTab('routines-view')">
+                <span class="nav-icon">🏋️</span>
+                <span class="nav-label">RUTINAS</span>
+            </div>
+
+            <div id="top-btn-profile" class="nav-item-top" onclick="window.switchTab('profile-view')">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">PERFIL</span>
+            </div>
+            
             <div id="notif-badge" class="notif-badge" onclick="window.dismissNotif()">🔔</div>
         </div>
     </header>
@@ -59,9 +61,10 @@
                 <button class="btn" id="btn-login">ENTRAR</button>
                 <div class="link-text" onclick="window.recoverPass()">¿Olvidaste tu contraseña?</div>
                 <button class="btn-outline" onclick="window.toggleAuth('register')" style="margin-top:20px;">CREAR CUENTA</button>
+                
                 <div id="install-banner" class="hidden install-box">
-                    <h4>📲 INSTALAR APP</h4>
-                    <p id="install-text"></p>
+                    <h4 style="color:var(--warning-color); margin-bottom:5px;">📲 INSTALAR APP</h4>
+                    <p id="install-text" style="color:#ccc; font-size:0.85rem;"></p>
                 </div>
             </div>
             <div id="register-form" class="hidden">
@@ -352,17 +355,6 @@
 
     </main>
 
-    <nav class="bottom-nav" id="bottom-nav">
-        <div class="nav-item active" id="nav-routines" onclick="window.switchTab('routines-view')">
-            <span class="nav-icon">🏋️</span>
-            <span>Rutinas</span>
-        </div>
-        <div class="nav-item" id="nav-profile" onclick="window.switchTab('profile-view')">
-            <span class="nav-icon">⚙️</span>
-            <span>Perfil</span>
-        </div>
-    </nav>
-
     <div id="modal-timer" class="modal">
         <div class="modal-content">
             <h3 style="color:var(--success-color)">DESCANSO</h3>
@@ -394,7 +386,7 @@
     </div>
     <div id="modal-progress" class="modal">
         <div class="modal-content">
-            <h3>📈 EVOLUCIÓN</h3>
+            <h3>📈 EVOLUCIÓN DETALLADA</h3>
             <select id="progress-select" onchange="window.renderProgressChart(this.value)" style="margin-bottom:20px;"></select>
             <div style="height:250px; width:100%; position:relative;"><canvas id="progressChart"></canvas></div>
             <button class="btn-outline" style="margin-top:20px;" onclick="document.getElementById('modal-progress').classList.remove('active')">CERRAR</button>
