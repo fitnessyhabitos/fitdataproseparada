@@ -28,19 +28,19 @@
         </div>
         
         <div class="header-right">
-            <div id="btn-coach" class="header-icon-btn hidden" onclick="window.navToCoach()">
-                <span class="top-icon">🛡️</span>
-                <span class="top-label" style="color:#ffaa00;">COACH</span>
-            </div>
-
             <nav class="desktop-nav">
-                <div class="d-link active" id="d-nav-routines" onclick="window.switchTab('routines-view')">
+                <div class="d-link active" id="pc-nav-routines" onclick="window.switchTab('routines-view')">
                     <span>🏋️</span> RUTINAS
                 </div>
-                <div class="d-link" id="d-nav-profile" onclick="window.switchTab('profile-view')">
+                <div class="d-link" id="pc-nav-profile" onclick="window.switchTab('profile-view')">
                     <span>⚙️</span> PERFIL
                 </div>
             </nav>
+
+            <div id="btn-coach" class="header-icon-btn hidden" onclick="window.navToCoach()">
+                <span class="top-icon">🛡️</span>
+                <span class="top-label">COACH</span>
+            </div>
 
             <div id="notif-badge" class="notif-badge" onclick="window.dismissNotif()">🔔</div>
         </div>
@@ -363,13 +363,13 @@
     </main>
 
     <nav class="bottom-nav" id="bottom-nav">
-        <div class="nav-item active" id="nav-routines" onclick="window.switchTab('routines-view')">
+        <div class="nav-item active" id="mobile-nav-routines" onclick="window.switchTab('routines-view')">
             <span class="nav-icon">🏋️</span>
-            <span>Rutinas</span>
+            <span class="nav-label">RUTINAS</span>
         </div>
-        <div class="nav-item" id="nav-profile" onclick="window.switchTab('profile-view')">
+        <div class="nav-item" id="mobile-nav-profile" onclick="window.switchTab('profile-view')">
             <span class="nav-icon">⚙️</span>
-            <span>Perfil</span>
+            <span class="nav-label">PERFIL</span>
         </div>
     </nav>
 
