@@ -28,18 +28,25 @@
         </div>
         
         <div class="header-right">
-            <nav class="desktop-nav">
-                <div class="d-link active" id="d-nav-routines" onclick="window.switchTab('routines-view')">
-                    <span>🏋️</span> RUTINAS
+            
+            <div class="desktop-nav-group">
+                <div id="pc-btn-coach" class="nav-item-header hidden" onclick="window.navToCoach()">
+                    <span class="nav-icon">🛡️</span>
+                    <span class="nav-label" style="color: #ffaa00;">COACH</span>
                 </div>
-                <div class="d-link" id="d-nav-profile" onclick="window.switchTab('profile-view')">
-                    <span>⚙️</span> PERFIL
+                <div id="pc-btn-routines" class="nav-item-header active" onclick="window.switchTab('routines-view')">
+                    <span class="nav-icon">🏋️</span>
+                    <span class="nav-label">RUTINAS</span>
                 </div>
-            </nav>
+                <div id="pc-btn-profile" class="nav-item-header" onclick="window.switchTab('profile-view')">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-label">PERFIL</span>
+                </div>
+            </div>
 
-            <div id="btn-coach" class="header-icon-btn hidden" onclick="window.navToCoach()">
-                <span class="top-icon">🛡️</span>
-                <span class="top-label">COACH</span>
+            <div id="mobile-btn-coach" class="nav-item-header mobile-only hidden" onclick="window.navToCoach()">
+                <span class="nav-icon">🛡️</span>
+                <span class="nav-label" style="color: #ffaa00;">COACH</span>
             </div>
 
             <div id="notif-badge" class="notif-badge" onclick="window.dismissNotif()">🔔</div>
@@ -64,7 +71,6 @@
                     <h4>📲 INSTALAR APP</h4>
                     <p id="install-text"></p>
                 </div>
-
             </div>
             <div id="register-form" class="hidden">
                 <input type="text" id="reg-name" placeholder="Nombre">
@@ -343,13 +349,13 @@
     </main>
 
     <nav class="bottom-nav" id="bottom-nav">
-        <div class="nav-item active" id="nav-routines" onclick="window.switchTab('routines-view')">
+        <div class="nav-item active" id="mobile-nav-routines" onclick="window.switchTab('routines-view')">
             <span class="nav-icon">🏋️</span>
-            <span>Rutinas</span>
+            <span class="nav-label">RUTINAS</span>
         </div>
-        <div class="nav-item" id="nav-profile" onclick="window.switchTab('profile-view')">
+        <div class="nav-item" id="mobile-nav-profile" onclick="window.switchTab('profile-view')">
             <span class="nav-icon">⚙️</span>
-            <span>Perfil</span>
+            <span class="nav-label">PERFIL</span>
         </div>
     </nav>
 
