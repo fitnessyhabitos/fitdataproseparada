@@ -27,23 +27,21 @@
             <div class="brand-text">FIT DATA <span>PRO</span></div>
         </div>
         
-        <div class="header-menu">
-            
-            <div id="top-btn-coach" class="top-nav-item hidden" onclick="window.loadAdminUsers(); window.switchTab('admin-view');">
+        <div class="header-right">
+            <nav class="desktop-nav">
+                <div class="d-link active" id="d-nav-routines" onclick="window.switchTab('routines-view')">
+                    <span>🏋️</span> RUTINAS
+                </div>
+                <div class="d-link" id="d-nav-profile" onclick="window.switchTab('profile-view')">
+                    <span>⚙️</span> PERFIL
+                </div>
+            </nav>
+
+            <div id="btn-coach" class="header-icon-btn hidden" onclick="window.navToCoach()">
                 <span class="top-icon">🛡️</span>
-                <span class="top-label" style="color:#ffaa00;">COACH</span>
+                <span class="top-label">COACH</span>
             </div>
 
-            <div id="top-btn-routines" class="top-nav-item active" onclick="window.switchTab('routines-view')">
-                <span class="top-icon">🏋️</span>
-                <span class="top-label">RUTINAS</span>
-            </div>
-
-            <div id="top-btn-profile" class="top-nav-item" onclick="window.switchTab('profile-view')">
-                <span class="top-icon">⚙️</span>
-                <span class="top-label">PERFIL</span>
-            </div>
-            
             <div id="notif-badge" class="notif-badge" onclick="window.dismissNotif()">🔔</div>
         </div>
     </header>
@@ -338,6 +336,17 @@
 
     </main>
 
+    <nav class="bottom-nav" id="bottom-nav">
+        <div class="nav-item active" id="nav-routines" onclick="window.switchTab('routines-view')">
+            <span class="nav-icon">🏋️</span>
+            <span>Rutinas</span>
+        </div>
+        <div class="nav-item" id="nav-profile" onclick="window.switchTab('profile-view')">
+            <span class="nav-icon">⚙️</span>
+            <span>Perfil</span>
+        </div>
+    </nav>
+
     <div id="modal-timer" class="modal">
         <div class="modal-content">
             <h3 style="color:var(--success-color)">DESCANSO</h3>
@@ -348,7 +357,6 @@
             </div>
         </div>
     </div>
-
     <div id="modal-rpe" class="modal">
         <div class="modal-content">
             <h3>FINALIZAR</h3>
@@ -361,7 +369,6 @@
             <button class="btn-outline" onclick="document.getElementById('modal-rpe').classList.remove('active')">Cancelar</button>
         </div>
     </div>
-
     <div id="modal-details" class="modal">
         <div class="modal-content" style="text-align:left;">
             <h3 id="detail-title" style="color:var(--accent-color); text-align:center; margin-bottom:15px;">DETALLES</h3>
@@ -369,19 +376,15 @@
             <button class="btn-outline" style="margin-top:15px;" onclick="document.getElementById('modal-details').classList.remove('active')">CERRAR</button>
         </div>
     </div>
-
     <div id="modal-progress" class="modal">
         <div class="modal-content">
-            <h3>📈 EVOLUCIÓN DETALLADA</h3>
+            <h3>📈 EVOLUCIÓN</h3>
             <select id="progress-select" onchange="window.renderProgressChart(this.value)" style="margin-bottom:20px;"></select>
-            <div style="height:250px; width:100%; position:relative;">
-                <canvas id="progressChart"></canvas>
-            </div>
+            <div style="height:250px; width:100%; position:relative;"><canvas id="progressChart"></canvas></div>
             <button class="btn-outline" style="margin-top:20px;" onclick="document.getElementById('modal-progress').classList.remove('active')">CERRAR</button>
         </div>
     </div>
-
-    <div id="modal-video" class="modal" style="z-index: 3000;">
+    <div id="modal-video" class="modal" style="z-index: 20000;">
         <div class="modal-content" style="width:100%; max-width:600px; padding:10px; background:black;">
             <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden;">
                 <iframe id="youtube-frame" style="position:absolute; top:0; left:0; width:100%; height:100%;" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
