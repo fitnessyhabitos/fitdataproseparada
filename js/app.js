@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App v13.0 (Responsive Fix)...");
+console.log("⚡ FIT DATA: Iniciando App (Menu Dual)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -106,41 +106,7 @@ window.enableNotifications = () => {
     });
 };
 
-window.navToCoach = () => {
-    if (userData.role === 'admin' || userData.role === 'assistant') {
-        window.loadAdminUsers();
-        window.switchTab('admin-view');
-    }
-};
-
-function checkInstallPrompt() {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    if (isStandalone) return;
-    const ua = navigator.userAgent;
-    const banner = document.getElementById('install-banner');
-    const text = document.getElementById('install-text');
-    if (/iPhone|iPad|iPod/.test(ua)) {
-        banner.classList.remove('hidden');
-        text.innerHTML = "Pulsa <b>Compartir</b> <span style='font-size:1.2rem'>⎋</span> y luego <b>'Añadir a inicio'</b> (+).";
-    } else if (/Android/.test(ua)) {
-        banner.classList.remove('hidden');
-        text.innerHTML = "Pulsa menú <b>(⋮)</b> y selecciona <b>'Instalar aplicación'</b>.";
-    }
-}
-window.addEventListener('load', checkInstallPrompt);
-
-// --- CORRECCIÓN CARGA ---
-let appReady = false;
-
 onAuthStateChanged(auth, async (user) => {
-    if(!appReady) {
-        // Garantizar que la pantalla de carga se vaya tras 2s
-        setTimeout(() => { 
-            const loader = document.getElementById('loading-screen');
-            if(loader) loader.style.display = 'none'; 
-        }, 2000); 
-    }
-
     if(user) {
         currentUser = user;
         const snap = await getDoc(doc(db,"users",user.uid));
@@ -148,10 +114,9 @@ onAuthStateChanged(auth, async (user) => {
             userData = snap.data();
             checkPhotoReminder();
             
-            // Botón Coach
+            // Mostrar botones Coach si es admin/assistant
             if(userData.role === 'admin' || userData.role === 'assistant') {
-                const btn = document.getElementById('btn-coach');
-                if(btn) btn.classList.remove('hidden');
+                document.querySelectorAll('.coach-btn-trigger').forEach(el => el.classList.remove('hidden'));
             }
 
             if(userData.role !== 'admin' && userData.role !== 'assistant' && !sessionStorage.getItem('notif_dismissed')) {
@@ -160,10 +125,11 @@ onAuthStateChanged(auth, async (user) => {
             }
 
             if(userData.approved){
+                setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 1500); 
                 document.getElementById('main-header').classList.remove('hidden');
                 
                 // Mostrar barra inferior en móvil
-                const bottomNav = document.getElementById('bottom-nav');
+                const bottomNav = document.querySelector('.bottom-nav');
                 if(bottomNav && window.innerWidth < 768) bottomNav.style.display = 'flex';
                 
                 loadRoutines();
@@ -177,13 +143,12 @@ onAuthStateChanged(auth, async (user) => {
             } else { alert("Cuenta en revisión."); signOut(auth); }
         }
     } else {
+        setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 1500);
         switchTab('auth-view');
         document.getElementById('main-header').classList.add('hidden');
-        const bn = document.getElementById('bottom-nav');
+        const bn = document.querySelector('.bottom-nav');
         if(bn) bn.style.display = 'none';
-        checkInstallPrompt();
     }
-    appReady = true;
 });
 
 function checkPhotoReminder() {
@@ -191,44 +156,34 @@ function checkPhotoReminder() {
     const now = new Date();
     const day = now.getDay();
     const time = now.toTimeString().substr(0,5);
-    // Aviso simple
-    if(day == userData.photoDay) {
-        if (Notification.permission === "granted") {
-            try { new Notification("📸 FOTO", { body: "Hoy toca foto de progreso.", icon: "logo.png" }); } catch(e){}
-        }
-        alert("📸 HOY TOCA FOTO DE PROGRESO 📸");
-    }
+    if(day == userData.photoDay && time === userData.photoTime) alert("📸 HORA DE TU FOTO DE PROGRESO 📸");
 }
 
 window.switchTab = (t) => {
-    // Ocultar todas las vistas
+    // 1. Ocultar todas las vistas
     document.querySelectorAll('.view-container').forEach(e => e.classList.remove('active'));
-    // Mostrar seleccionada
+    // 2. Mostrar la seleccionada
     document.getElementById(t).classList.add('active');
-    // Resetear scroll
+    // 3. Resetear scroll
     document.getElementById('main-container').scrollTop = 0;
     
-    // ACTUALIZAR BOTONES (PC y Móvil)
-    const allNavs = document.querySelectorAll('.nav-item, .nav-item-top');
-    allNavs.forEach(n => n.classList.remove('active'));
+    // 4. Actualizar botones (Header y Bottom Nav)
+    // Desactivar todos
+    document.querySelectorAll('.top-nav-item, .nav-item').forEach(n => n.classList.remove('active'));
     
-    // Activar simultáneamente PC y Móvil
+    // Activar los correspondientes (usando clases comunes para simplificar)
     if (t === 'routines-view') {
-        const btnM = document.getElementById('mobile-nav-routines');
-        if(btnM) btnM.classList.add('active');
-        const btnPC = document.getElementById('pc-nav-routines');
-        if(btnPC) btnPC.classList.add('active');
+        const btns = document.querySelectorAll('.nav-routines-trigger');
+        btns.forEach(b => b.classList.add('active'));
     }
     if (t === 'profile-view') {
-        const btnM = document.getElementById('mobile-nav-profile');
-        if(btnM) btnM.classList.add('active');
-        const btnPC = document.getElementById('pc-nav-profile');
-        if(btnPC) btnPC.classList.add('active');
+        const btns = document.querySelectorAll('.nav-profile-trigger');
+        btns.forEach(b => b.classList.add('active'));
         loadProfile();
     }
     if (t === 'admin-view' || t === 'coach-detail-view') {
-        const btn = document.getElementById('btn-coach');
-        if(btn) btn.classList.add('active');
+        const btns = document.querySelectorAll('.coach-btn-trigger');
+        btns.forEach(b => b.classList.add('active'));
     }
 };
 
@@ -443,18 +398,9 @@ window.moveSlider = (v) => {
 
 window.switchCoachPose = (pose) => {
     coachCurrentPose = pose;
-    const tabFront = document.getElementById('coach-tab-front');
-    const tabBack = document.getElementById('coach-tab-back');
-    if(tabFront && tabBack) {
-        if(pose === 'front') {
-            tabFront.classList.add('active');
-            tabBack.classList.remove('active');
-        } else {
-            tabFront.classList.remove('active');
-            tabBack.classList.add('active');
-        }
-        updateCoachPhotoDisplay(pose);
-    }
+    document.getElementById('coach-tab-front').classList.toggle('active', pose==='front');
+    document.getElementById('coach-tab-back').classList.toggle('active', pose==='back');
+    updateCoachPhotoDisplay(pose);
 };
 
 function updateCoachPhotoDisplay(pose) {
