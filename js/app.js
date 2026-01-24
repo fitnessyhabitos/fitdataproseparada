@@ -58,6 +58,22 @@ window.toggleElement = (id) => {
     if(el) el.classList.toggle('hidden');
 };
 
+function checkInstallMode() {
+    // Detecta si es modo app (standalone)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    const banner = document.getElementById('installInstructions');
+    if (banner) {
+        if (!isStandalone) {
+            // SI NO ES APP: Le quitamos 'hidden' para que se vea
+            banner.classList.remove('hidden'); 
+        } else {
+            // SI ES APP: Lo ocultamos
+            banner.classList.add('hidden');
+        }
+    }
+}
+
 function unlockAudio() {
     if(!audioCtx) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1147,4 +1163,5 @@ document.getElementById('btn-register').onclick=async()=>{
         });
     }catch(e){alert("Error: " + e.message + " (Posiblemente código secreto incorrecto)");}
 };
+
 document.getElementById('btn-login').onclick=()=>signInWithEmailAndPassword(auth,document.getElementById('login-email').value,document.getElementById('login-pass').value).catch(e=>alert(e.message));
