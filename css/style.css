@@ -233,21 +233,10 @@ input:checked + .slider { background-color: var(--accent-color); } input:checked
     color: #ff3333;
 }
 
-/* Clase para ocultarlo si ya está instalada */
-.hidden {
-    display: none !important;
-}
-
-} else {
-    updateNavVisibility(false);
-    switchTab('auth-view');
-
-    checkInstallMode(); // <--- ¡ESTO TIENE QUE ESTAR AQUÍ!
-}
-
 /* --- FUERZA BRUTA: OCULTAR SI ES APP --- */
 @media all and (display-mode: standalone) {
     .pwa-install-box {
         display: none !important;
     }
 }
+
