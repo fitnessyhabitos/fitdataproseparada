@@ -11,6 +11,7 @@
     <link rel="icon" href="favicon.ico">
     <link rel="apple-touch-icon" href="https://fitdatatg.web.app/logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -28,20 +29,20 @@
         </div>
         
         <div class="header-right">
-            <div id="btn-coach" class="nav-item-top hidden" onclick="window.navToCoach()">
-                <span class="nav-icon">🛡️</span>
-                <span class="nav-label coach-label">COACH</span>
-            </div>
-
-            <div class="desktop-nav desktop-only">
-                <div id="pc-btn-routines" class="nav-item-top active" onclick="window.switchTab('routines-view')">
+            <nav class="desktop-nav desktop-only">
+                <div class="nav-item-top active" id="pc-btn-routines" onclick="window.switchTab('routines-view')">
                     <span class="nav-icon">🏋️</span>
                     <span class="nav-label">RUTINAS</span>
                 </div>
-                <div id="pc-btn-profile" class="nav-item-top" onclick="window.switchTab('profile-view')">
+                <div class="nav-item-top" id="pc-btn-profile" onclick="window.switchTab('profile-view')">
                     <span class="nav-icon">⚙️</span>
                     <span class="nav-label">PERFIL</span>
                 </div>
+            </nav>
+
+            <div id="btn-coach" class="nav-item-top hidden" onclick="window.navToCoach()">
+                <span class="nav-icon">🛡️</span>
+                <span class="nav-label coach-label">COACH</span>
             </div>
 
             <div id="notif-badge" class="notif-badge" onclick="window.dismissNotif()">🔔</div>
@@ -62,12 +63,11 @@
                 <div class="link-text" onclick="window.recoverPass()">¿Olvidaste tu contraseña?</div>
                 <button class="btn-outline" onclick="window.toggleAuth('register')" style="margin-top:20px;">CREAR CUENTA</button>
                 
-                <div id="installInstructions" class="install-box hidden">
-                    <h4 style="color:var(--warning-color); margin-bottom:10px;">📲 INSTALAR APP</h4>
-                    <div class="pwa-steps" style="margin-bottom:5px;">🍎 <strong>iOS:</strong> Compartir (⎋) > Añadir a inicio.</div>
-                    <div class="pwa-steps">🤖 <strong>Android:</strong> Menú (⋮) > Instalar aplicación.</div>
+                <div id="installInstructions" class="pwa-install-box hidden">
+                    <h4><i class="bi bi-phone"></i> Instalar App</h4>
+                    <div class="pwa-steps"><i class="bi bi-apple"></i> <strong>iOS:</strong> Compartir <span style="font-size:1.2rem">⎋</span> > Añadir a inicio.</div>
+                    <div class="pwa-steps"><i class="bi bi-android"></i> <strong>Android:</strong> Menú <span style="font-size:1.2rem">⋮</span> > Instalar aplicación.</div>
                 </div>
-
             </div>
             <div id="register-form" class="hidden">
                 <input type="text" id="reg-name" placeholder="Nombre">
@@ -314,59 +314,27 @@
                 </div>
             </div>
             
-            <div class="card">
-                <h3>⚙️ CONFIGURACIÓN ATLETA</h3>
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span>Habilitar Pliegues</span>
-                    <label class="switch"><input type="checkbox" id="coach-toggle-skinfolds" onchange="window.toggleUserFeature('showSkinfolds', this.checked)"><span class="slider"></span></label>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span>Habilitar Medidas</span>
-                    <label class="switch"><input type="checkbox" id="coach-toggle-measures" onchange="window.toggleUserFeature('showMeasurements', this.checked)"><span class="slider"></span></label>
-                </div>
-                <div style="display:flex; justify-content:space-between; margin-top:10px;">
-                    <span>Habilitar Vídeos (YouTube)</span>
-                    <label class="switch"><input type="checkbox" id="coach-toggle-videos" onchange="window.toggleUserFeature('showVideos', this.checked)"><span class="slider"></span></label>
-                </div>
-            </div>
-
-            <div id="coach-view-skinfolds" class="card hidden">
-                <h3>% GRASA (JP7)</h3>
-                <div style="height:200px; width:100%; position:relative;">
-                    <canvas id="coachFatChart"></canvas>
-                </div>
-            </div>
-
-            <div id="coach-view-measures" class="card hidden">
-                <h3>MEDIDAS (cm)</h3>
-                <div style="height:250px; width:100%; position:relative;">
-                    <canvas id="coachMeasuresChart"></canvas>
-                </div>
-            </div>
-
-            <div id="coach-stats-text" class="stat-pill-grid" style="margin-bottom:20px;"></div>
-            
-            <div class="card">
-                <h3>📸 FOTOS</h3>
-                <div class="photo-tabs">
-                    <div class="photo-tab active" id="coach-tab-front" onclick="window.switchCoachPose('front')">FRONTAL</div>
-                    <div class="photo-tab" id="coach-tab-back" onclick="window.switchCoachPose('back')">ESPALDA</div>
-                </div>
-                <div id="coach-photos-container"></div>
-                <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:0.7rem; color:#888;">
-                    <span id="coach-date-before">-</span><span id="coach-date-after">-</span>
-                </div>
-            </div>
-
-            <div class="card"><h3>GRÁFICA PESO</h3><div style="height:200px; width:100%; position:relative; margin-bottom: 20px;"><canvas id="coachWeightChart"></canvas></div></div>
-            <div class="card"><h3>RUTINAS ASIGNADAS</h3><div id="coach-assigned-list"></div><label>Asignar Nueva:</label><input type="text" placeholder="🔍" id="coach-routine-filter" oninput="window.filterCoachRoutines(this.value)"><select id="coach-routine-select"></select><button class="btn" onclick="window.assignRoutine()">ENVIAR</button></div>
-            <div class="card"><h3>HISTORIAL</h3><div id="coach-history-list"></div></div>
-            <button class="btn-danger btn" style="width:100%; margin-bottom:30px;" onclick="window.deleteUser()">🗑️ ELIMINAR ATLETA</button>
+             <div id="coach-stats-text" class="stat-pill-grid" style="margin-bottom:20px;"></div>
+             <div class="card"><h3>📸 FOTOS</h3><div id="coach-photos-container"></div></div>
+             <div class="card"><h3>GRÁFICA PESO</h3><div style="height:200px; width:100%; position:relative; margin-bottom: 20px;"><canvas id="coachWeightChart"></canvas></div></div>
+             <div class="card">
+                 <h3>RUTINAS ASIGNADAS</h3>
+                 <div id="coach-assigned-list"></div>
+                 <label>Asignar Nueva:</label>
+                 <div style="display:flex; gap:10px;">
+                    <input type="text" placeholder="🔍" id="coach-routine-filter" oninput="window.filterCoachRoutines(this.value)" style="flex:1;">
+                    <button class="btn-outline" style="width:auto; padding:0 15px;" onclick="window.goToCreateRoutine()">+</button>
+                 </div>
+                 <select id="coach-routine-select"></select>
+                 <button class="btn" onclick="window.assignRoutine()">ENVIAR</button>
+             </div>
+             <div class="card"><h3>HISTORIAL</h3><div id="coach-history-list"></div></div>
+             <button class="btn-danger btn" style="width:100%; margin-bottom:30px;" onclick="window.deleteUser()">🗑️ ELIMINAR ATLETA</button>
         </section>
 
     </main>
 
-    <nav id="bottom-nav" class="bottom-nav mobile-only" style="display:none;">
+    <nav id="bottom-nav" class="bottom-nav mobile-only hidden">
         <div class="nav-item active" id="mobile-nav-routines" onclick="window.switchTab('routines-view')">
             <span class="nav-icon">🏋️</span>
             <span class="nav-label">RUTINAS</span>
@@ -414,7 +382,7 @@
             <button class="btn-outline" style="margin-top:20px;" onclick="document.getElementById('modal-progress').classList.remove('active')">CERRAR</button>
         </div>
     </div>
-    <div id="modal-video" class="modal" style="z-index: 20000;">
+    <div id="modal-video" class="modal" style="z-index: 3000;">
         <div class="modal-content" style="width:100%; max-width:600px; padding:10px; background:black;">
             <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden;">
                 <iframe id="youtube-frame" style="position:absolute; top:0; left:0; width:100%; height:100%;" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
