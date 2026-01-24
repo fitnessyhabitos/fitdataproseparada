@@ -59,17 +59,17 @@ window.toggleElement = (id) => {
 };
 
 function checkInstallMode() {
-    // Detecta si es modo app (standalone)
+    // Detectamos si está en modo App (Standalone)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-
     const banner = document.getElementById('installInstructions');
+
     if (banner) {
-        if (!isStandalone) {
-            // SI NO ES APP: Le quitamos 'hidden' para que se vea
-            banner.classList.remove('hidden'); 
-        } else {
-            // SI ES APP: Lo ocultamos
+        if (isStandalone) {
+            // SI YA ES UNA APP: AÑADIMOS 'hidden' para que no moleste
             banner.classList.add('hidden');
+        } else {
+            // SI ES NAVEGADOR (Safari/Chrome): Nos aseguramos de que se vea
+            banner.classList.remove('hidden');
         }
     }
 }
@@ -1165,3 +1165,4 @@ document.getElementById('btn-register').onclick=async()=>{
 };
 
 document.getElementById('btn-login').onclick=()=>signInWithEmailAndPassword(auth,document.getElementById('login-email').value,document.getElementById('login-pass').value).catch(e=>alert(e.message));
+
