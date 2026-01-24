@@ -19,6 +19,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
+/* SHELL IOS NATIVO: Evitar rebotes */
 body { 
     background-color: var(--bg-color); 
     color: var(--text-color); 
@@ -30,7 +31,6 @@ body {
     overscroll-behavior: none; 
 }
 
-/* CLASE CRÍTICA PARA OCULTAR */
 .hidden { display: none !important; }
 
 /* HEADER */
@@ -49,83 +49,36 @@ header {
 .brand-text span { color: var(--accent-color); text-shadow: 0 0 10px rgba(255,51,51,0.5); }
 .header-right { display: flex; align-items: center; gap: 15px; }
 
-/* NAV ESCRITORIO */
-.desktop-nav { display: flex; gap: 20px; align-items: center; }
-
-/* BOTONES */
+/* ESTILOS UNIFICADOS BOTONES */
 .nav-item-top, .nav-item { 
     display: flex; flex-direction: column; align-items: center; justify-content: center; 
     cursor: pointer; color: #666; transition: color 0.2s; min-width: 45px;
 }
-.nav-icon { font-size: 1.3rem; margin-bottom: 2px; }
+.nav-icon { font-size: 1.3rem; margin-bottom: 2px; line-height: 1; }
 .nav-label { font-family: var(--font-main) !important; font-size: 0.55rem; font-weight: bold; text-transform: uppercase; margin-top: 2px; }
 .active { color: var(--accent-color); }
 .active .nav-label { color: var(--accent-color); }
 .coach-label { color: var(--warning-color) !important; }
 
+.desktop-nav { display: flex; gap: 20px; align-items: center; }
 .notif-badge { display:none; background:var(--accent-color); color:white; border-radius:50%; width:24px; height:24px; text-align:center; line-height:24px; font-size:0.8rem; margin-left:10px; animation: breathe 2s infinite; cursor: pointer; }
 
 /* CONTENEDOR PRINCIPAL */
 #main-container { 
     flex: 1; overflow-y: auto; position: relative; 
     -webkit-overflow-scrolling: touch; 
-    padding: 20px 15px; 
+    padding: 20px 15px 80px 15px; 
     background: var(--bg-color); 
 }
 
-/* BARRA INFERIOR (MÓVIL) */
+/* BARRA INFERIOR (Móvil) */
 .bottom-nav {
-    position: fixed; 
-    bottom: 0; left: 0; width: 100%;
-    background: #0f0f0f; 
-    border-top: 1px solid #222;
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    background: #0f0f0f; border-top: 1px solid #222;
     display: flex; justify-content: space-around; align-items: center;
     padding-bottom: env(safe-area-inset-bottom);
     height: calc(var(--footer-height) + env(safe-area-inset-bottom));
     z-index: 5000;
-}
-
-/* TIP BOX DESTACADO */
-.tip-box {
-    background: rgba(255, 170, 0, 0.15);
-    border: 1px solid var(--warning-color);
-    color: #ffcc80;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 0.8rem;
-    text-align: center;
-    margin-bottom: 15px;
-    display: block; /* Asegura que se vea */
-}
-
-/* PWA INSTALL BOX */
-.pwa-install-box {
-    background: #1a1a1a;
-    border: 1px solid var(--accent-color);
-    padding: 20px;
-    border-radius: 12px;
-    margin-top: 30px;
-    text-align: left;
-    box-shadow: 0 0 15px rgba(255,51,51,0.2);
-}
-.pwa-install-box h4 {
-    color: var(--accent-color);
-    margin-bottom: 12px;
-    text-align: center;
-    font-size: 1rem;
-    font-family: var(--font-sport);
-    letter-spacing: 1px;
-}
-.pwa-steps {
-    font-size: 0.85rem;
-    color: #ddd;
-    margin-bottom: 8px;
-    line-height: 1.6;
-}
-.pwa-steps i {
-    color: var(--accent-color);
-    margin-right: 5px;
-    font-size: 1.1rem;
 }
 
 /* RESPONSIVE */
@@ -142,7 +95,7 @@ header {
     .mobile-only { display: flex !important; }
 }
 
-/* ESTILOS DE PERFIL Y UI */
+/* ESTILOS RECUPERADOS */
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
 .stat-box { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 10px; text-align: center; }
 .stat-num { font-size: 1.2rem; font-weight: 800; color: white; display: block; }
@@ -152,10 +105,13 @@ header {
 .progress-track { width: 100%; height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
 .progress-fill { height: 100%; background: var(--accent-color); width: 0%; transition: width 1s ease; }
 
-.photo-tabs { display: flex; margin-bottom: 10px; background: #222; border-radius: 8px; padding: 2px; }
-.photo-tab { flex: 1; text-align: center; padding: 10px; font-size: 0.8rem; cursor: pointer; color: #888; border-radius: 6px; }
-.photo-tab.active { background: var(--accent-color); color: white; font-weight: bold; }
+/* CAJA INSTALACIÓN */
+.pwa-install-box { background: #1a1a1a; border: 1px solid var(--accent-color); padding: 20px; border-radius: 12px; margin-top: 30px; text-align: left; box-shadow: 0 0 20px rgba(255, 51, 51, 0.15); }
+.pwa-install-box h4 { font-family: var(--font-sport); margin-bottom: 12px; font-size: 1rem; text-align: center; letter-spacing: 1px; color: var(--accent-color); }
+.pwa-steps { font-size: 0.85rem; color: white; margin-bottom: 8px; line-height: 1.6; display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 8px; }
+.pwa-steps i { font-size: 1.3rem; color: var(--accent-color); }
 
+/* UI */
 .view-container { display: none; opacity: 0; animation: fadeIn 0.3s forwards; }
 .view-container.active { display: block; opacity: 1; }
 @keyframes fadeIn { to { opacity: 1; } }
@@ -164,7 +120,6 @@ header {
 .loading-text { margin-top: 30px; color: var(--accent-color); font-family: monospace; font-size: 1.1rem; letter-spacing: 4px; font-weight: bold; text-shadow: 0 0 10px var(--accent-color); animation: blink 0.8s infinite; }
 @keyframes breathe { 0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 50px rgba(255,51,51,0.7); } 50% { transform: scale(1.05); opacity: 0.8; box-shadow: 0 0 20px rgba(255,51,51,0.3); } }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
 .card { background: var(--card-color); border-radius: 12px; padding: 18px; margin-bottom: 18px; border: 1px solid #222; position: relative; }
 .btn { background: var(--accent-color); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; width: 100%; box-shadow: var(--accent-glow); display: flex; justify-content: center; align-items: center; transition: transform 0.1s; }
 .btn:active { transform: scale(0.98); }
