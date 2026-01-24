@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App v19.0 (Admin Tabs Fixed)...");
+console.log("⚡ FIT DATA: Iniciando App v20.0 (Admin Polish)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -526,15 +526,12 @@ function renderMeasureChart(canvasId, historyData) {
 
 // --- FIX ADMIN TABS LOGIC ---
 window.toggleAdminMode = (mode) => {
-    // 1. Cambiar estado visual de botones
     document.getElementById('tab-users').classList.toggle('active', mode==='users');
     document.getElementById('tab-lib').classList.toggle('active', mode==='lib');
     
-    // 2. Cambiar visibilidad de tarjetas
     document.getElementById('admin-users-card').classList.toggle('hidden', mode!=='users');
     document.getElementById('admin-lib-card').classList.toggle('hidden', mode!=='lib');
     
-    // 3. Cargar datos
     if(mode==='users') window.loadAdminUsers();
     if(mode==='lib') window.loadAdminLibrary();
 };
@@ -543,7 +540,6 @@ window.loadAdminUsers = async () => {
     const l = document.getElementById('admin-list');
     l.innerHTML = '<div style="text-align:center;padding:20px;color:#888;">↻ Cargando...</div>';
     try {
-        // Obtenemos TODOS los usuarios primero para evitar error de índice
         const snap = await getDocs(collection(db, "users"));
         l.innerHTML = '';
         if (snap.empty) { l.innerHTML = '<div style="text-align:center;padding:20px;">Sin usuarios.</div>'; return; }
@@ -551,11 +547,9 @@ window.loadAdminUsers = async () => {
         let count = 0;
         snap.forEach(d => {
             const u = d.data();
-            // Filtramos en cliente si soy assistant
             if(userData.role === 'assistant' && u.assignedCoach !== currentUser.uid) return;
-            // Ocultamos admins de la lista si queremos
-            
             count++;
+            
             let rowClass = "admin-user-row";
             let nameExtra = "";
             let roleLabel = "";
@@ -710,137 +704,6 @@ window.unassignRoutine = async (rid) => {
         await updateDoc(doc(db, "routines", rid), { assignedTo: arrayRemove(selectedUserCoach) });
         openCoachView(selectedUserCoach, selectedUserObj); 
     }
-};
-
-async function openCoachView(uid,u) {
-    selectedUserCoach=uid;
-    const freshSnap = await getDoc(doc(db, "users", uid));
-    const freshU = freshSnap.data();
-    selectedUserObj = freshU; 
-    switchTab('coach-detail-view');
-    document.getElementById('coach-user-name').innerText=freshU.name + (freshU.role === 'assistant' ? ' (Coach 🛡️)' : '');
-    document.getElementById('coach-user-email').innerText=freshU.email;
-    const genderIcon = freshU.gender === 'female' ? '♀️' : '♂️';
-    document.getElementById('coach-user-meta').innerText = `${genderIcon} ${freshU.age} años • ${freshU.height} cm`;
-
-    const banner = document.getElementById('pending-approval-banner');
-    if(!freshU.approved) { banner.classList.remove('hidden'); } else { banner.classList.add('hidden'); }
-
-    if(userData.role === 'admin') {
-        let adminActions = `<div style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">`;
-        if (uid !== currentUser.uid) {
-            if(freshU.role !== 'assistant' && freshU.role !== 'admin') {
-                adminActions += `<button class="btn-small btn-outline" onclick="window.updateUserRole('assistant')">🛡️ Ascender a Coach</button>`;
-            } else if (freshU.role === 'assistant') {
-                adminActions += `<button class="btn-small btn-danger" onclick="window.updateUserRole('athlete')">Bajar a Atleta</button>`;
-            }
-        } else {
-             adminActions += `<div style="font-size:0.7rem; color:var(--success-color); margin-bottom:5px;">Estás viendo tu propio perfil de atleta.</div>`;
-        }
-        const qAssist = query(collection(db,"users"), where("role", "==", "assistant"));
-        const snapA = await getDocs(qAssist);
-        assistantsCache = snapA.docs.map(d=>({id:d.id, name:d.data().name}));
-        if(assistantsCache.length > 0) {
-             if (freshU.role === 'athlete' || uid === currentUser.uid) {
-                 let options = `<option value="">-- Sin Coach Asignado --</option>`;
-                 assistantsCache.forEach(a => {
-                     const selected = freshU.assignedCoach === a.id ? 'selected' : '';
-                     options += `<option value="${a.id}" ${selected}>${a.name}</option>`;
-                 });
-                 adminActions += `<div style="margin-top:10px;">
-                    <label style="font-size:0.7rem; color:#888;">Coach Asignado:</label>
-                    <select onchange="window.assignToAssistant(this.value)" style="margin-top:5px;">${options}</select>
-                 </div>`;
-             }
-        }
-        adminActions += `</div>`;
-        document.getElementById('coach-user-meta').innerHTML += adminActions;
-    }
-
-    updateCoachPhotoDisplay('front');
-    document.getElementById('coach-toggle-skinfolds').checked = !!freshU.showSkinfolds;
-    document.getElementById('coach-toggle-measures').checked = !!freshU.showMeasurements;
-    document.getElementById('coach-toggle-videos').checked = !!freshU.showVideos;
-
-    const pCard = document.getElementById('coach-view-skinfolds');
-    const mCard = document.getElementById('coach-view-measures');
-    if(freshU.skinfoldHistory && freshU.skinfoldHistory.length > 0) {
-        pCard.classList.remove('hidden');
-        if(coachFatChart) coachFatChart.destroy();
-        const ctxF = document.getElementById('coachFatChart');
-        const dataF = freshU.skinfoldHistory.map(f => f.fat || 0);
-        const labels = userData.skinfoldHistory.map(f => new Date(f.date.seconds*1000).toLocaleDateString());
-        coachFatChart = new Chart(ctxF, { type: 'line', data: { labels: labels, datasets: [{ label: '% Grasa', data: dataF, borderColor: '#ffaa00', tension: 0.3 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#333' } }, x: { display: false } }, maintainAspectRatio: false } });
-    } else { pCard.classList.add('hidden'); }
-
-    if(freshU.measureHistory && freshU.measureHistory.length > 0) {
-        mCard.classList.remove('hidden');
-        renderMeasureChart('coachMeasuresChart', freshU.measureHistory);
-    } else { mCard.classList.add('hidden'); }
-
-    try {
-        const s = document.getElementById('coach-routine-select'); s.innerHTML = '<option>Cargando...</option>';
-        const allRoutinesSnap = await getDocs(collection(db, "routines"));
-        allRoutinesCache = [];
-        s.innerHTML = '<option value="">Selecciona rutina...</option>';
-        allRoutinesSnap.forEach(r => {
-            const data = r.data(); allRoutinesCache.push({id: r.id, ...data});
-            const o = document.createElement('option'); o.value = r.id; o.innerText = data.name; s.appendChild(o); 
-        });
-        const rList = document.getElementById('coach-assigned-list'); rList.innerHTML = '';
-        const assignedRoutines = allRoutinesCache.filter(r => r.assignedTo && r.assignedTo.includes(uid));
-        if(assignedRoutines.length === 0) { rList.innerHTML = 'Ninguna rutina asignada.'; } else {
-            assignedRoutines.forEach(r => {
-                const div = document.createElement('div'); div.className = "assigned-routine-item";
-                div.innerHTML = `<span>${r.name}</span><button style="background:none;border:none;color:#f55;font-weight:bold;cursor:pointer;" onclick="unassignRoutine('${r.id}')">❌</button>`;
-                rList.appendChild(div);
-            });
-        }
-    } catch(e) { console.error("Error loading routines", e); }
-
-    try {
-        const st = freshU.stats || {};
-        const age = freshU.age ? freshU.age : 'N/D';
-        document.getElementById('coach-stats-text').innerHTML = `<div class="stat-pill"><b>${st.workouts||0}</b><span>ENTRENOS</span></div><div class="stat-pill"><b>${(st.totalKg/1000||0).toFixed(1)}t</b><span>CARGA</span></div><div class="stat-pill"><b>${age}</b><span>AÑOS</span></div>`;
-        if(coachChart) coachChart.destroy();
-        const ctx = document.getElementById('coachWeightChart');
-        const wData = freshU.weightHistory || [];
-        const data = (wData && wData.length > 0) ? wData : [70];
-        coachChart = new Chart(ctx, { type:'line', data: { labels:data.map((_,i)=>i+1), datasets:[{label:'Kg', data:data, borderColor:'#ff3333', fill:false}] }, options:{plugins:{legend:{display:false}}, scales:{x:{display:false},y:{grid:{color:'#333'}}}, maintainAspectRatio: false}});
-
-        const hList = document.getElementById('coach-history-list');
-        hList.innerHTML = 'Cargando historial...';
-        const qH = query(collection(db,"workouts"), where("uid","==",uid));
-        const wSnap = await getDocs(qH);
-        hList.innerHTML = '';
-        if(wSnap.empty) { hList.innerHTML='Sin datos recientes.'; } else {
-            const sortedDocs = wSnap.docs.map(doc => ({id: doc.id, ...doc.data()})).sort((a,b) => b.date - a.date).slice(0, 10);
-            sortedDocs.forEach(d => {
-                const date = d.date ? new Date(d.date.seconds*1000).toLocaleDateString() : '-';
-                let rpeBadge = d.rpe === 'Suave' ? '<span class="badge green">🟢</span>' : (d.rpe === 'Duro' ? '<span class="badge orange">🟠</span>' : (d.rpe === 'Fallo' ? '<span class="badge red">🔴</span>' : '<span class="badge gray">-</span>'));
-                const detailsStr = d.details ? encodeURIComponent(JSON.stringify(d.details)) : "";
-                const noteStr = d.note ? encodeURIComponent(d.note) : "";
-                const btnVer = d.details ? `<button class="btn-small btn-outline" style="margin:0; padding:2px 6px;" onclick="viewWorkoutDetails('${d.routine}', '${detailsStr}', '${noteStr}')">Ver Detalles</button>` : '';
-                hList.innerHTML += `<div class="history-row" style="grid-template-columns: 60px 1fr 30px 80px;"><div class="hist-date">${date}</div><div class="hist-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${d.routine}</div><div class="hist-rpe">${rpeBadge}</div><div>${btnVer}</div></div>`;
-            });
-        }
-    } catch(e) { console.error("Error loading coach details", e); hList.innerHTML='Error cargando datos.'; }
-}
-
-window.viewWorkoutDetails = (title, dataStr, noteStr) => {
-    if(!dataStr) return;
-    const data = JSON.parse(decodeURIComponent(dataStr));
-    const note = noteStr ? decodeURIComponent(noteStr) : "Sin notas.";
-    const content = document.getElementById('detail-content');
-    document.getElementById('detail-title').innerText = title;
-    let html = `<div class="note-display">📝 ${note}</div>`;
-    data.forEach(ex => {
-        html += `<div style="margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;"><strong style="color:white;">${ex.n}</strong><div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:5px;">`;
-        ex.s.forEach((set, i) => { html += `<span style="background:#222; padding:3px 6px; border-radius:4px; border:1px solid #444; color:#ccc;">#${i+1}: <b>${set.r}</b> x ${set.w}kg</span>`; });
-        html += `</div></div>`;
-    });
-    content.innerHTML = html;
-    document.getElementById('modal-details').classList.add('active');
 };
 
 // ... LISTENERS ...
