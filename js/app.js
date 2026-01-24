@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App v17.0 (Coach & Menu Fix)...");
+console.log("⚡ FIT DATA: Iniciando App v13.5 (Auth UI Fix)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -106,51 +106,43 @@ window.enableNotifications = () => {
     });
 };
 
-// --- FIX BOTÓN COACH ---
-window.navToCoach = async () => {
-    // Forzamos el cambio de vista PRIMERO para dar feedback inmediato
-    window.switchTab('admin-view');
-    // Luego cargamos los datos
-    if(window.loadAdminUsers) await window.loadAdminUsers();
+window.navToCoach = () => {
+    if (userData.role === 'admin' || userData.role === 'assistant') {
+        window.loadAdminUsers();
+        window.switchTab('admin-view');
+    }
 };
 
-// --- GESTIÓN VISIBILIDAD BARRA MENU ---
-function updateNavVisibility(isLoggedIn) {
-    const bottomNav = document.getElementById('bottom-nav');
-    const header = document.getElementById('main-header');
-    
-    if (isLoggedIn) {
-        header.classList.remove('hidden');
-        // Mostrar barra inferior solo si es móvil
-        if(window.innerWidth < 768 && bottomNav) {
-            bottomNav.classList.remove('hidden');
-            document.getElementById('main-container').style.paddingBottom = "80px";
-        }
-    } else {
-        // En Login, ocultar todo
-        header.classList.add('hidden');
-        if(bottomNav) bottomNav.classList.add('hidden');
-        document.getElementById('main-container').style.paddingBottom = "20px";
-    }
-}
-
-// --- DETECTAR INSTALACIÓN ---
-function checkInstallMode() {
+function checkInstallPrompt() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    const banner = document.getElementById('installInstructions');
-    if(banner) {
-        if (isStandalone) {
-            banner.classList.add('hidden');
-        } else {
-            banner.classList.remove('hidden');
-        }
+    // Si ya está instalada, ocultamos el banner
+    if (isStandalone) {
+        const banner = document.getElementById('install-banner');
+        if(banner) banner.classList.add('hidden');
+        return;
+    }
+    
+    const ua = navigator.userAgent;
+    const banner = document.getElementById('install-banner');
+    const text = document.getElementById('install-text');
+    
+    // Si es móvil y no es standalone, mostramos banner
+    if (/iPhone|iPad|iPod/.test(ua)) {
+        banner.classList.remove('hidden');
+        text.innerHTML = "Pulsa <b>Compartir</b> <span style='font-size:1.2rem'>⎋</span> y luego <b>'Añadir a inicio'</b> (+).";
+    } else if (/Android/.test(ua)) {
+        banner.classList.remove('hidden');
+        text.innerHTML = "Pulsa menú <b>(⋮)</b> y selecciona <b>'Instalar aplicación'</b>.";
     }
 }
+window.addEventListener('load', checkInstallPrompt);
 
+// --- GESTIÓN DE AUTH Y NAVEGACIÓN ---
 let appReady = false;
 
 onAuthStateChanged(auth, async (user) => {
-    if(!appReady) {
+    // Timeout seguridad carga
+    if (!appReady) {
         setTimeout(() => { 
             const loader = document.getElementById('loading-screen');
             if(loader) loader.style.display = 'none'; 
@@ -158,25 +150,32 @@ onAuthStateChanged(auth, async (user) => {
     }
 
     if(user) {
+        // --- USUARIO LOGUEADO ---
         currentUser = user;
         const snap = await getDoc(doc(db,"users",user.uid));
         if(snap.exists()){
             userData = snap.data();
             checkPhotoReminder();
             
-            // Botón Coach GLOBAL
+            // 1. Mostrar Botón Coach si corresponde
             if(userData.role === 'admin' || userData.role === 'assistant') {
                 const btn = document.getElementById('btn-coach');
                 if(btn) btn.classList.remove('hidden');
             }
 
+            // 2. Notificaciones pendientes
             if(userData.role !== 'admin' && userData.role !== 'assistant' && !sessionStorage.getItem('notif_dismissed')) {
                 const routinesSnap = await getDocs(query(collection(db, "routines"), where("assignedTo", "array-contains", user.uid)));
                 if(!routinesSnap.empty) document.getElementById('notif-badge').style.display = 'block';
             }
 
             if(userData.approved){
-                updateNavVisibility(true);
+                document.getElementById('main-header').classList.remove('hidden');
+                
+                // 3. MOSTRAR BARRA INFERIOR (Solo en móvil si user logueado)
+                const bottomNav = document.getElementById('bottom-nav');
+                if(bottomNav && window.innerWidth < 768) bottomNav.style.display = 'flex';
+                
                 loadRoutines();
                 const savedW = localStorage.getItem('fit_active_workout');
                 if(savedW) {
@@ -188,9 +187,15 @@ onAuthStateChanged(auth, async (user) => {
             } else { alert("Cuenta en revisión."); signOut(auth); }
         }
     } else {
-        updateNavVisibility(false);
+        // --- NO LOGUEADO ---
         switchTab('auth-view');
-        checkInstallMode();
+        document.getElementById('main-header').classList.add('hidden');
+        
+        // 4. OCULTAR BARRA INFERIOR (Crítico)
+        const bn = document.getElementById('bottom-nav');
+        if(bn) bn.style.display = 'none';
+        
+        checkInstallPrompt();
     }
     appReady = true;
 });
@@ -208,15 +213,16 @@ function checkPhotoReminder() {
 }
 
 window.switchTab = (t) => {
+    // Ocultar vistas
     document.querySelectorAll('.view-container').forEach(e => e.classList.remove('active'));
+    // Mostrar target
     document.getElementById(t).classList.add('active');
     document.getElementById('main-container').scrollTop = 0;
     
     // Resetear activos
-    const navItems = document.querySelectorAll('.top-nav-item, .nav-item');
-    navItems.forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.nav-item, .nav-item-top').forEach(n => n.classList.remove('active'));
     
-    // Activar botones correspondientes
+    // Activar botones correspondientes (móvil y PC)
     if (t === 'routines-view') {
         const btnM = document.getElementById('mobile-nav-routines');
         if(btnM) btnM.classList.add('active');
@@ -529,7 +535,7 @@ function renderMeasureChart(canvasId, historyData) {
         {k:'shoulder', l:'Hombros', c:'#A133FF'}
     ];
     const datasets = parts.map(p => ({ label: p.l, data: historyData.map(h => h[p.k] || 0), borderColor: p.c, tension: 0.3, pointRadius: 2 }));
-    const newChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: datasets }, options: { plugins: { legend: { display: true, labels: { color: '#888', boxWidth: 10, font: {size: 10} } } }, scales: { y: { grid: { color: '#333' } }, x: { display: false } }, maintainAspectRatio: false } });
+    const newChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: datasets }, options: { plugins: { legend: { display: true, labels: { color: 'white' } } }, scales: { y: { grid: { color: '#333' }, ticks: { color: '#888' } }, x: { ticks: { color: '#888', maxTicksLimit: 5 } } }, maintainAspectRatio: false } });
     if(canvasId === 'chartMeasures') measureChartInstance = newChart; else coachMeasureChart = newChart;
 }
 
