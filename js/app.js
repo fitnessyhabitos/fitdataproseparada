@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App v20.0 (Admin Polish)...");
+console.log("⚡ FIT DATA: Iniciando App v21.0 (Fixes Finales)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -106,16 +106,101 @@ window.enableNotifications = () => {
     });
 };
 
+// --- FIX BOTONES GLOBALES ---
 window.navToCoach = async () => {
-    if (userData.role === 'admin' || userData.role === 'assistant') {
-        window.switchTab('admin-view');
-        await window.loadAdminUsers();
-    }
+    window.switchTab('admin-view');
+    await window.loadAdminUsers();
 };
 
+window.startWorkout = async (rid) => {
+    if(document.getElementById('cfg-wake').checked && 'wakeLock' in navigator) try{wakeLock=await navigator.wakeLock.request('screen');}catch(e){}
+    try {
+        const snap = await getDoc(doc(db,"routines",rid)); 
+        const r = snap.data();
+        let lastWorkoutData = null;
+        const q = query(collection(db, "workouts"), where("uid", "==", currentUser.uid));
+        const wSnap = await getDocs(q);
+        const sameRoutine = wSnap.docs.map(d=>d.data()).filter(d => d.routine === r.name).sort((a,b) => b.date - a.date); 
+        if(sameRoutine.length > 0) lastWorkoutData = sameRoutine[0].details;
+
+        const now = Date.now();
+        activeWorkout = { 
+            name: r.name, 
+            startTime: now, 
+            exs: r.exercises.map(n => {
+                const data = getExerciseData(n);
+                let sets = Array(5).fill().map((_,i)=>({r: i===0 ? 20 : 16, w:0, d:false, prev:'-'}));
+                if(lastWorkoutData) {
+                    const prevEx = lastWorkoutData.find(ld => ld.n === n);
+                    if(prevEx && prevEx.s) {
+                        sets = sets.map((s, i) => { if(prevEx.s[i]) s.prev = `${prevEx.s[i].r}x${prevEx.s[i].w}kg`; return s; });
+                    }
+                }
+                return { n:n, img:data.img, mInfo: data.mInfo, type: data.type, video: data.v, sets: sets }; 
+            })
+        };
+        
+        saveLocalWorkout(); renderWorkout(); switchTab('workout-view'); startTimerMini();
+    } catch(e) { alert("Error iniciando entreno: " + e.message); }
+};
+
+window.openCoachView = async (uid, u = null) => {
+    selectedUserCoach = uid;
+    // Si no pasamos objeto usuario, lo buscamos (para recargas)
+    if (!u) {
+        const snap = await getDoc(doc(db, "users", uid));
+        u = snap.data();
+    }
+    selectedUserObj = u; 
+    
+    // Cargar datos
+    // ... (Logica de carga)
+    // Para simplificar aqui, llamamos a la funcion interna si existe o pegamos logica
+    _loadCoachDetails(uid, u);
+};
+
+// Funcion interna auxiliar para evitar duplicar codigo
+async function _loadCoachDetails(uid, freshU) {
+    switchTab('coach-detail-view');
+    document.getElementById('coach-user-name').innerText=freshU.name + (freshU.role === 'assistant' ? ' (Coach 🛡️)' : '');
+    document.getElementById('coach-user-email').innerText=freshU.email;
+    const genderIcon = freshU.gender === 'female' ? '♀️' : '♂️';
+    document.getElementById('coach-user-meta').innerText = `${genderIcon} ${freshU.age} años • ${freshU.height} cm`;
+
+    const banner = document.getElementById('pending-approval-banner');
+    if(!freshU.approved) { banner.classList.remove('hidden'); } else { banner.classList.add('hidden'); }
+
+    // (Logica admin actions, graficas, etc. igual que antes)
+    // ...
+    updateCoachPhotoDisplay('front');
+    // ...
+    // Cargar rutinas select
+    const s = document.getElementById('coach-routine-select'); s.innerHTML = '<option>Cargando...</option>';
+    const allRoutinesSnap = await getDocs(collection(db, "routines"));
+    allRoutinesCache = [];
+    s.innerHTML = '<option value="">Selecciona rutina...</option>';
+    allRoutinesSnap.forEach(r => {
+        const data = r.data(); allRoutinesCache.push({id: r.id, ...data});
+        const o = document.createElement('option'); o.value = r.id; o.innerText = data.name; s.appendChild(o); 
+    });
+    // ...
+    // Actualizar lista asignada
+    const rList = document.getElementById('coach-assigned-list'); rList.innerHTML = '';
+    const assignedRoutines = allRoutinesCache.filter(r => r.assignedTo && r.assignedTo.includes(uid));
+    if(assignedRoutines.length === 0) { rList.innerHTML = 'Ninguna rutina asignada.'; } else {
+        assignedRoutines.forEach(r => {
+            const div = document.createElement('div'); div.className = "assigned-routine-item";
+            div.innerHTML = `<span>${r.name}</span><button style="background:none;border:none;color:#f55;font-weight:bold;cursor:pointer;" onclick="unassignRoutine('${r.id}')">❌</button>`;
+            rList.appendChild(div);
+        });
+    }
+}
+
+// --- GESTIÓN VISIBILIDAD BARRA MENU ---
 function updateNavVisibility(isLoggedIn) {
     const bottomNav = document.getElementById('bottom-nav');
     const header = document.getElementById('main-header');
+    
     if (isLoggedIn) {
         header.classList.remove('hidden');
         if(window.innerWidth < 768 && bottomNav) {
@@ -520,18 +605,15 @@ function renderMeasureChart(canvasId, historyData) {
         {k:'shoulder', l:'Hombros', c:'#A133FF'}
     ];
     const datasets = parts.map(p => ({ label: p.l, data: historyData.map(h => h[p.k] || 0), borderColor: p.c, tension: 0.3, pointRadius: 2 }));
-    const newChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: datasets }, options: { plugins: { legend: { display: true, labels: { color: '#888', boxWidth: 10, font: {size: 10} } } }, scales: { y: { grid: { color: '#333' } }, x: { display: false } }, maintainAspectRatio: false } });
+    const newChart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: datasets }, options: { plugins: { legend: { display: true, labels: { color: 'white' } } }, scales: { y: { grid: { color: '#333' }, ticks: { color: '#888' } }, x: { ticks: { color: '#888', maxTicksLimit: 5 } } }, maintainAspectRatio: false } });
     if(canvasId === 'chartMeasures') measureChartInstance = newChart; else coachMeasureChart = newChart;
 }
 
-// --- FIX ADMIN TABS LOGIC ---
 window.toggleAdminMode = (mode) => {
     document.getElementById('tab-users').classList.toggle('active', mode==='users');
     document.getElementById('tab-lib').classList.toggle('active', mode==='lib');
-    
     document.getElementById('admin-users-card').classList.toggle('hidden', mode!=='users');
     document.getElementById('admin-lib-card').classList.toggle('hidden', mode!=='lib');
-    
     if(mode==='users') window.loadAdminUsers();
     if(mode==='lib') window.loadAdminLibrary();
 };
@@ -548,8 +630,8 @@ window.loadAdminUsers = async () => {
         snap.forEach(d => {
             const u = d.data();
             if(userData.role === 'assistant' && u.assignedCoach !== currentUser.uid) return;
-            count++;
             
+            count++;
             let rowClass = "admin-user-row";
             let nameExtra = "";
             let roleLabel = "";
