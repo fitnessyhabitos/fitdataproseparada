@@ -240,3 +240,33 @@ input:checked + .slider { background-color: var(--accent-color); } input:checked
     }
 }
 
+/* --- FIX DE SCROLL BLOQUEADO --- */
+
+/* 1. Forzar scroll vertical fluido en el contenedor principal */
+#main-container {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Imprescindible para iOS */
+    touch-action: pan-y; /* Permite deslizar verticalmente siempre */
+    overscroll-behavior-y: contain; /* Evita que rebote la página entera */
+}
+
+/* 2. Arreglar bloqueo en GRÁFICOS (Chart.js) */
+/* Esto permite hacer scroll aunque tengas el dedo encima de la gráfica */
+canvas {
+    touch-action: pan-y !important; 
+}
+
+/* 3. Arreglar bloqueo en SLIDER DE FOTOS */
+/* El slider necesita moverse horizontalmente, pero bloqueamos el vertical 
+   para que no se vuelva loco, o usamos pan-y para permitir bajar */
+.compare-wrapper {
+    touch-action: pan-y;
+}
+.slider-handle {
+    touch-action: none; /* El tirador sí debe capturar todo el toque */
+}
+
+/* 4. Asegurar que las tarjetas no bloqueen el toque */
+.card {
+    touch-action: pan-y;
+}
