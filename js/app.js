@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App v16.5 (Final Polish)...");
+console.log("⚡ FIT DATA: Iniciando App (Clean Login)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -106,7 +106,6 @@ window.enableNotifications = () => {
     });
 };
 
-// --- FUNCIÓN COACH ---
 window.navToCoach = () => {
     if (userData.role === 'admin' || userData.role === 'assistant') {
         window.loadAdminUsers();
@@ -114,50 +113,40 @@ window.navToCoach = () => {
     }
 };
 
-// --- GESTIÓN VISIBILIDAD BARRA MENU ---
+// --- GESTIÓN DE VISIBILIDAD BARRA INFERIOR ---
 function updateNavVisibility(isLoggedIn) {
     const bottomNav = document.getElementById('bottom-nav');
     const header = document.getElementById('main-header');
     
     if (isLoggedIn) {
-        // Logueado: Mostrar header
+        // En login sí mostramos header y barra (si es móvil)
         header.classList.remove('hidden');
-        // Mostrar barra inferior solo si es móvil
-        if(window.innerWidth < 768 && bottomNav) {
+        if(window.innerWidth < 768) {
             bottomNav.classList.remove('hidden');
             document.getElementById('main-container').style.paddingBottom = "80px";
+        } else {
+            bottomNav.classList.add('hidden');
+            document.getElementById('main-container').style.paddingBottom = "20px";
         }
     } else {
-        // No Logueado: Ocultar todo
+        // No logueado: OCULTAR TODO
         header.classList.add('hidden');
-        if(bottomNav) bottomNav.classList.add('hidden');
+        bottomNav.classList.add('hidden');
         document.getElementById('main-container').style.paddingBottom = "20px";
     }
 }
 
-// --- DETECTAR INSTALACIÓN ---
+// --- DETECTAR MODO APP (STANDALONE) ---
 function checkInstallMode() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    const banner = document.getElementById('installInstructions');
-    if(banner) {
-        if (isStandalone) {
-            banner.classList.add('hidden');
-        } else {
-            banner.classList.remove('hidden');
-        }
+    if (!isStandalone) {
+        document.getElementById('installInstructions').classList.remove('hidden');
+    } else {
+        document.getElementById('installInstructions').classList.add('hidden');
     }
 }
 
-let appReady = false;
-
 onAuthStateChanged(auth, async (user) => {
-    if(!appReady) {
-        setTimeout(() => { 
-            const loader = document.getElementById('loading-screen');
-            if(loader) loader.style.display = 'none'; 
-        }, 2000); 
-    }
-
     if(user) {
         currentUser = user;
         const snap = await getDoc(doc(db,"users",user.uid));
@@ -165,7 +154,7 @@ onAuthStateChanged(auth, async (user) => {
             userData = snap.data();
             checkPhotoReminder();
             
-            // Botón Coach GLOBAL
+            // Mostrar Botón Coach si corresponde
             if(userData.role === 'admin' || userData.role === 'assistant') {
                 const btn = document.getElementById('btn-coach');
                 if(btn) btn.classList.remove('hidden');
@@ -177,7 +166,11 @@ onAuthStateChanged(auth, async (user) => {
             }
 
             if(userData.approved){
+                setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 1500); 
+                
+                // ACTUALIZAR VISIBILIDAD MENÚS
                 updateNavVisibility(true);
+
                 loadRoutines();
                 const savedW = localStorage.getItem('fit_active_workout');
                 if(savedW) {
@@ -189,18 +182,25 @@ onAuthStateChanged(auth, async (user) => {
             } else { alert("Cuenta en revisión."); signOut(auth); }
         }
     } else {
-        updateNavVisibility(false);
+        setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 1500);
         switchTab('auth-view');
+        
+        // OCULTAR MENÚS EN LOGIN
+        updateNavVisibility(false);
+        
+        // MOSTRAR INSTRUCCIONES SI NO ES APP
         checkInstallMode();
     }
-    appReady = true;
 });
 
 function checkPhotoReminder() {
     if(!userData.photoDay) return;
     const now = new Date();
     const day = now.getDay();
+    const time = now.toTimeString().substr(0,5);
+    // Disparo alerta visual
     if(day == userData.photoDay) {
+         // Intento de notificación si hay permiso
         if (Notification.permission === "granted") {
             try { new Notification("📸 FOTO", { body: "Hoy toca foto de progreso.", icon: "logo.png" }); } catch(e){}
         }
@@ -209,34 +209,31 @@ function checkPhotoReminder() {
 }
 
 window.switchTab = (t) => {
-    // 1. Ocultar todas las vistas
     document.querySelectorAll('.view-container').forEach(e => e.classList.remove('active'));
-    // 2. Mostrar la seleccionada
     document.getElementById(t).classList.add('active');
-    // 3. Resetear scroll
     document.getElementById('main-container').scrollTop = 0;
     
-    // 4. Actualizar botones (Header y Bottom Nav)
-    const navItems = document.querySelectorAll('.top-nav-item, .nav-item');
+    // Resetear activos
+    const navItems = document.querySelectorAll('.nav-item, .top-nav-item');
     navItems.forEach(n => n.classList.remove('active'));
     
-    // Activar simultáneamente PC y Móvil
+    // Activar botones correspondientes
     if (t === 'routines-view') {
-        const btnM = document.getElementById('mobile-nav-routines');
-        if(btnM) btnM.classList.add('active');
-        const btnPC = document.getElementById('pc-btn-routines');
-        if(btnPC) btnPC.classList.add('active');
+        const btnTop = document.getElementById('pc-btn-routines');
+        const btnBot = document.getElementById('nav-routines'); // Móvil
+        if(btnTop) btnTop.classList.add('active');
+        if(btnBot) btnBot.classList.add('active');
     }
     if (t === 'profile-view') {
-        const btnM = document.getElementById('mobile-nav-profile');
-        if(btnM) btnM.classList.add('active');
-        const btnPC = document.getElementById('pc-btn-profile');
-        if(btnPC) btnPC.classList.add('active');
+        const btnTop = document.getElementById('pc-btn-profile');
+        const btnBot = document.getElementById('nav-profile'); // Móvil
+        if(btnTop) btnTop.classList.add('active');
+        if(btnBot) btnBot.classList.add('active');
         loadProfile();
     }
     if (t === 'admin-view' || t === 'coach-detail-view') {
-        const btn = document.getElementById('btn-coach');
-        if(btn) btn.classList.add('active');
+        const btnCoach = document.getElementById('btn-coach');
+        if(btnCoach) btnCoach.classList.add('active');
     }
 };
 
