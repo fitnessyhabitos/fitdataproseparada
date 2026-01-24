@@ -35,7 +35,7 @@ body {
 /* HEADER */
 header { 
     flex-shrink: 0; 
-    height: calc(70px + var(--safe-top)); 
+    height: calc(var(--header-height) + var(--safe-top)); 
     padding-top: var(--safe-top); 
     background: rgba(5,5,5,0.98); 
     border-bottom: 1px solid #222; 
@@ -80,31 +80,44 @@ header {
     z-index: 5000;
 }
 
-/* ADMIN TABS ESTILIZADAS */
+/* --- ADMIN TABS (LIQUID GLASS EFFECT) --- */
 .admin-tabs { 
     display: flex; 
-    gap: 10px; 
-    margin-bottom: 20px; 
-    background: #1a1a1a; 
-    padding: 5px; 
-    border-radius: 12px; 
-    border: 1px solid #333;
+    gap: 15px; 
+    margin-bottom: 25px; 
+    background: transparent; 
+    padding: 0; 
+    border: none;
 }
 .admin-tab-btn { 
     flex: 1; 
-    padding: 12px; 
+    padding: 16px; 
     text-align: center; 
-    border-radius: 8px; 
-    color: #666; 
-    font-weight: bold; 
+    border-radius: 12px; 
+    color: #888; 
+    font-weight: 800; 
     cursor: pointer; 
-    transition: 0.3s; 
-    font-size: 0.85rem; 
+    transition: all 0.3s ease; 
+    font-family: var(--font-sport); 
+    font-size: 0.9rem; 
+    letter-spacing: 1px;
+    text-transform: uppercase;
+
+    /* Efecto Vidrio Inactivo */
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
 }
 .admin-tab-btn.active { 
-    background: var(--accent-color); 
     color: white; 
-    box-shadow: var(--accent-glow); 
+    /* Efecto Liquid Glass ACTIVO */
+    background: linear-gradient(135deg, rgba(255, 51, 51, 0.8), rgba(200, 0, 0, 0.9));
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 
+        0 4px 15px rgba(255, 51, 51, 0.4), 
+        inset 0 0 10px rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+    text-shadow: 0 0 5px rgba(255,255,255,0.5);
 }
 
 /* PWA INSTALL */
