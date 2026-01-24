@@ -64,7 +64,7 @@
                 <button class="btn-outline" onclick="window.toggleAuth('register')" style="margin-top:20px;">CREAR CUENTA</button>
                 
                 <div id="installInstructions" class="pwa-install-box hidden">
-                    <h4 style="color:var(--warning-color);"><i class="bi bi-phone"></i> Instalar App</h4>
+                    <h4><i class="bi bi-phone"></i> INSTALAR APP</h4>
                     <div class="pwa-steps"><i class="bi bi-apple"></i> <strong>iOS:</strong> Compartir <span style="font-size:1.2rem">⎋</span> > Añadir a inicio.</div>
                     <div class="pwa-steps"><i class="bi bi-android"></i> <strong>Android:</strong> Menú <span style="font-size:1.2rem">⋮</span> > Instalar aplicación.</div>
                 </div>
@@ -146,11 +146,8 @@
 
             <div class="card">
                 <h3>EVOLUCIÓN FÍSICA</h3>
+                <div class="tip-box">💡 TIP: Usa siempre la misma luz, ropa y lugar.</div>
                 
-                <div class="tip-box">
-                    <i class="bi bi-lightbulb-fill"></i> <strong>TIP:</strong> Usa siempre la misma luz, ropa y lugar para comparar mejor.
-                </div>
-
                 <div class="photo-tabs">
                     <div class="photo-tab active" id="tab-front" onclick="window.switchPose('front')">👤 FRONTAL</div>
                     <div class="photo-tab" id="tab-back" onclick="window.switchPose('back')">🛡️ ESPALDA</div>
@@ -281,7 +278,7 @@
             <h2 id="workout-title" style="margin-bottom:20px;">Entreno</h2>
             <div id="workout-exercises"></div>
         </section>
-        
+
         <section id="admin-view" class="view-container">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <h2>PANEL COACH</h2>
@@ -301,7 +298,7 @@
             </div>
             <button class="btn-outline" onclick="window.switchTab('routines-view')">VOLVER</button>
         </section>
-        
+
         <section id="coach-detail-view" class="view-container">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <button class="btn-outline btn-small" style="width:auto; margin:0;" onclick="window.switchTab('admin-view')">← VOLVER</button>
@@ -319,12 +316,25 @@
                     <button class="btn btn-success" onclick="window.approveUser()">✅ APROBAR ACCESO</button>
                 </div>
             </div>
-             <div id="coach-stats-text" class="stat-pill-grid" style="margin-bottom:20px;"></div>
-             <div class="card"><h3>📸 FOTOS</h3><div id="coach-photos-container"></div></div>
-             <div class="card"><h3>GRÁFICA PESO</h3><div style="height:200px; width:100%; position:relative; margin-bottom: 20px;"><canvas id="coachWeightChart"></canvas></div></div>
-             <div class="card"><h3>RUTINAS ASIGNADAS</h3><div id="coach-assigned-list"></div><label>Asignar Nueva:</label><input type="text" placeholder="🔍" id="coach-routine-filter" oninput="window.filterCoachRoutines(this.value)"><select id="coach-routine-select"></select><button class="btn" onclick="window.assignRoutine()">ENVIAR</button></div>
-             <div class="card"><h3>HISTORIAL</h3><div id="coach-history-list"></div></div>
-             <button class="btn-danger btn" style="width:100%; margin-bottom:30px;" onclick="window.deleteUser()">🗑️ ELIMINAR ATLETA</button>
+            
+            <div id="coach-stats-text" class="stat-pill-grid" style="margin-bottom:20px;"></div>
+            
+            <div class="card">
+                <h3>📸 FOTOS</h3>
+                <div class="photo-tabs">
+                    <div class="photo-tab active" id="coach-tab-front" onclick="window.switchCoachPose('front')">FRONTAL</div>
+                    <div class="photo-tab" id="coach-tab-back" onclick="window.switchCoachPose('back')">ESPALDA</div>
+                </div>
+                <div id="coach-photos-container"></div>
+                <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:0.7rem; color:#888;">
+                    <span id="coach-date-before">-</span><span id="coach-date-after">-</span>
+                </div>
+            </div>
+
+            <div class="card"><h3>GRÁFICA PESO</h3><div style="height:200px; width:100%; position:relative; margin-bottom: 20px;"><canvas id="coachWeightChart"></canvas></div></div>
+            <div class="card"><h3>RUTINAS ASIGNADAS</h3><div id="coach-assigned-list"></div><label>Asignar Nueva:</label><input type="text" placeholder="🔍" id="coach-routine-filter" oninput="window.filterCoachRoutines(this.value)"><select id="coach-routine-select"></select><button class="btn" onclick="window.assignRoutine()">ENVIAR</button></div>
+            <div class="card"><h3>HISTORIAL</h3><div id="coach-history-list"></div></div>
+            <button class="btn-danger btn" style="width:100%; margin-bottom:30px;" onclick="window.deleteUser()">🗑️ ELIMINAR ATLETA</button>
         </section>
 
     </main>
