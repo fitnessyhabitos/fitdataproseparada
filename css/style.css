@@ -244,3 +244,10 @@ input:checked + .slider { background-color: var(--accent-color); } input:checked
 
     checkInstallMode(); // <--- ¡ESTO TIENE QUE ESTAR AQUÍ!
 }
+
+/* --- FUERZA BRUTA: OCULTAR SI ES APP --- */
+@media all and (display-mode: standalone) {
+    .pwa-install-box {
+        display: none !important;
+    }
+}
