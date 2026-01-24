@@ -238,3 +238,9 @@ input:checked + .slider { background-color: var(--accent-color); } input:checked
     display: none !important;
 }
 
+} else {
+    updateNavVisibility(false);
+    switchTab('auth-view');
+
+    checkInstallMode(); // <--- ¡ESTO TIENE QUE ESTAR AQUÍ!
+}
