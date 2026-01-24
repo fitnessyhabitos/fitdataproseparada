@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App (Menu Logic Fix)...");
+console.log("⚡ FIT DATA: Iniciando App v15.0 (Menu Fix)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -113,36 +113,36 @@ window.navToCoach = () => {
     }
 };
 
-// --- GESTIÓN DE MENÚS (CLAVE) ---
+// --- GESTIÓN VISIBILIDAD BARRA MENU ---
 function updateNavVisibility(isLoggedIn) {
     const bottomNav = document.getElementById('bottom-nav');
     const header = document.getElementById('main-header');
     
     if (isLoggedIn) {
-        // Usuario logueado: Mostramos header siempre
         header.classList.remove('hidden');
-        
-        // Barra inferior: Solo si es pantalla pequeña
+        // Mostrar barra inferior solo si es móvil
         if(window.innerWidth < 768 && bottomNav) {
             bottomNav.classList.remove('hidden');
             document.getElementById('main-container').style.paddingBottom = "80px";
         }
     } else {
-        // Login: Ocultar TODO
+        // En Login, ocultar todo
         header.classList.add('hidden');
         if(bottomNav) bottomNav.classList.add('hidden');
         document.getElementById('main-container').style.paddingBottom = "20px";
     }
 }
 
-// --- CHECK INSTALACIÓN PWA ---
+// --- DETECTAR INSTALACIÓN ---
 function checkInstallMode() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     const banner = document.getElementById('installInstructions');
-    if (isStandalone) {
-        if(banner) banner.classList.add('hidden');
-    } else {
-        if(banner) banner.classList.remove('hidden');
+    if(banner) {
+        if (isStandalone) {
+            banner.classList.add('hidden');
+        } else {
+            banner.classList.remove('hidden');
+        }
     }
 }
 
@@ -163,9 +163,13 @@ onAuthStateChanged(auth, async (user) => {
             userData = snap.data();
             checkPhotoReminder();
             
+            // Botón Coach
             if(userData.role === 'admin' || userData.role === 'assistant') {
-                const btn = document.getElementById('top-btn-coach');
+                const btn = document.getElementById('btn-coach'); // En Header
                 if(btn) btn.classList.remove('hidden');
+                
+                const btnM = document.getElementById('mobile-btn-coach'); // En Footer Móvil
+                if(btnM) btnM.classList.remove('hidden');
             }
 
             if(userData.role !== 'admin' && userData.role !== 'assistant' && !sessionStorage.getItem('notif_dismissed')) {
@@ -174,7 +178,9 @@ onAuthStateChanged(auth, async (user) => {
             }
 
             if(userData.approved){
+                // MOSTRAR MENÚS
                 updateNavVisibility(true);
+                
                 loadRoutines();
                 const savedW = localStorage.getItem('fit_active_workout');
                 if(savedW) {
@@ -186,6 +192,7 @@ onAuthStateChanged(auth, async (user) => {
             } else { alert("Cuenta en revisión."); signOut(auth); }
         }
     } else {
+        // OCULTAR MENÚS
         updateNavVisibility(false);
         switchTab('auth-view');
         checkInstallMode();
@@ -197,6 +204,7 @@ function checkPhotoReminder() {
     if(!userData.photoDay) return;
     const now = new Date();
     const day = now.getDay();
+    // Aviso simple
     if(day == userData.photoDay) {
         if (Notification.permission === "granted") {
             try { new Notification("📸 FOTO", { body: "Hoy toca foto de progreso.", icon: "logo.png" }); } catch(e){}
@@ -210,7 +218,8 @@ window.switchTab = (t) => {
     document.getElementById(t).classList.add('active');
     document.getElementById('main-container').scrollTop = 0;
     
-    const navItems = document.querySelectorAll('.top-nav-item, .nav-item');
+    // Activar botones en PC y Móvil
+    const navItems = document.querySelectorAll('.nav-item, .nav-item-top');
     navItems.forEach(n => n.classList.remove('active'));
     
     if (t === 'routines-view') {
@@ -227,7 +236,7 @@ window.switchTab = (t) => {
         loadProfile();
     }
     if (t === 'admin-view' || t === 'coach-detail-view') {
-        const btn = document.getElementById('top-btn-coach');
+        const btn = document.getElementById('btn-coach');
         if(btn) btn.classList.add('active');
     }
 };
