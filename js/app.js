@@ -59,17 +59,21 @@ window.toggleElement = (id) => {
 };
 
 function checkInstallMode() {
-    // Detectamos si está en modo App (Standalone)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    const banner = document.getElementById('installInstructions');
+    // 1. Detectar estándar (Android/PC)
+    const isStandardStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    
+    // 2. Detectar específicamente iOS (iPhone/iPad)
+    const isIOSStandalone = window.navigator.standalone === true;
 
+    const banner = document.getElementById('installInstructions');
+    
     if (banner) {
-        if (isStandalone) {
-            // SI YA ES UNA APP: AÑADIMOS 'hidden' para que no moleste
-            banner.classList.add('hidden');
+        // Si cualquiera de los dos es verdadero, OCULTAMOS la caja
+        if (isStandardStandalone || isIOSStandalone) {
+            banner.style.display = 'none';
         } else {
-            // SI ES NAVEGADOR (Safari/Chrome): Nos aseguramos de que se vea
-            banner.classList.remove('hidden');
+            // Si es navegador normal, aseguramos que se vea
+            banner.style.display = 'block';
         }
     }
 }
@@ -1166,10 +1170,5 @@ document.getElementById('btn-register').onclick=async()=>{
 
 document.getElementById('btn-login').onclick=()=>signInWithEmailAndPassword(auth,document.getElementById('login-email').value,document.getElementById('login-pass').value).catch(e=>alert(e.message));
 
-/* --- FUERZA BRUTA: OCULTAR SI ES APP --- */
-@media all and (display-mode: standalone) {
-    .pwa-install-box {
-        display: none !important;
-    }
-}
+
 
