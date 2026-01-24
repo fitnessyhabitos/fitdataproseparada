@@ -1166,3 +1166,10 @@ document.getElementById('btn-register').onclick=async()=>{
 
 document.getElementById('btn-login').onclick=()=>signInWithEmailAndPassword(auth,document.getElementById('login-email').value,document.getElementById('login-pass').value).catch(e=>alert(e.message));
 
+/* --- FUERZA BRUTA: OCULTAR SI ES APP --- */
+@media all and (display-mode: standalone) {
+    .pwa-install-box {
+        display: none !important;
+    }
+}
+
