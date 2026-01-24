@@ -19,7 +19,6 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-/* SHELL IOS */
 body { 
     background-color: var(--bg-color); 
     color: var(--text-color); 
@@ -31,17 +30,13 @@ body {
     overscroll-behavior: none; 
 }
 
+/* CLASE CRÍTICA PARA OCULTAR */
 .hidden { display: none !important; }
-
-/* REGLA CRÍTICA PARA QUE NO SE VEAN JUNTAS */
-.view-container { display: none !important; opacity: 0; animation: fadeIn 0.3s forwards; }
-.view-container.active { display: block !important; opacity: 1; }
-@keyframes fadeIn { to { opacity: 1; } }
 
 /* HEADER */
 header { 
     flex-shrink: 0; 
-    height: calc(var(--header-height) + var(--safe-top)); 
+    height: calc(70px + var(--safe-top)); 
     padding-top: var(--safe-top); 
     background: rgba(5,5,5,0.98); 
     border-bottom: 1px solid #222; 
@@ -54,7 +49,10 @@ header {
 .brand-text span { color: var(--accent-color); text-shadow: 0 0 10px rgba(255,51,51,0.5); }
 .header-right { display: flex; align-items: center; gap: 15px; }
 
-/* NAV UNIFICADA */
+/* NAV ESCRITORIO */
+.desktop-nav { display: flex; gap: 20px; align-items: center; }
+
+/* BOTONES */
 .nav-item-top, .nav-item { 
     display: flex; flex-direction: column; align-items: center; justify-content: center; 
     cursor: pointer; color: #666; transition: color 0.2s; min-width: 45px;
@@ -65,18 +63,17 @@ header {
 .active .nav-label { color: var(--accent-color); }
 .coach-label { color: var(--warning-color) !important; }
 
-/* NAV ESCRITORIO */
-.desktop-nav { display: flex; gap: 20px; align-items: center; }
+.notif-badge { display:none; background:var(--accent-color); color:white; border-radius:50%; width:24px; height:24px; text-align:center; line-height:24px; font-size:0.8rem; margin-left:10px; animation: breathe 2s infinite; cursor: pointer; }
 
 /* CONTENEDOR PRINCIPAL */
 #main-container { 
     flex: 1; overflow-y: auto; position: relative; 
     -webkit-overflow-scrolling: touch; 
-    padding: 20px 15px 80px 15px; 
+    padding: 20px 15px; 
     background: var(--bg-color); 
 }
 
-/* BARRA INFERIOR (Solo Móvil) */
+/* BARRA INFERIOR (MÓVIL) */
 .bottom-nav {
     position: fixed; 
     bottom: 0; left: 0; width: 100%;
@@ -86,6 +83,49 @@ header {
     padding-bottom: env(safe-area-inset-bottom);
     height: calc(var(--footer-height) + env(safe-area-inset-bottom));
     z-index: 5000;
+}
+
+/* TIP BOX DESTACADO */
+.tip-box {
+    background: rgba(255, 170, 0, 0.15);
+    border: 1px solid var(--warning-color);
+    color: #ffcc80;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    text-align: center;
+    margin-bottom: 15px;
+    display: block; /* Asegura que se vea */
+}
+
+/* PWA INSTALL BOX */
+.pwa-install-box {
+    background: #1a1a1a;
+    border: 1px solid var(--accent-color);
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 30px;
+    text-align: left;
+    box-shadow: 0 0 15px rgba(255,51,51,0.2);
+}
+.pwa-install-box h4 {
+    color: var(--accent-color);
+    margin-bottom: 12px;
+    text-align: center;
+    font-size: 1rem;
+    font-family: var(--font-sport);
+    letter-spacing: 1px;
+}
+.pwa-steps {
+    font-size: 0.85rem;
+    color: #ddd;
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+.pwa-steps i {
+    color: var(--accent-color);
+    margin-right: 5px;
+    font-size: 1.1rem;
 }
 
 /* RESPONSIVE */
@@ -102,51 +142,23 @@ header {
     .mobile-only { display: flex !important; }
 }
 
-/* ESTILOS DE COMPONENTES (Recuperados) */
+/* ESTILOS DE PERFIL Y UI */
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
 .stat-box { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 10px; text-align: center; }
 .stat-num { font-size: 1.2rem; font-weight: 800; color: white; display: block; }
 .stat-label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
-
 .muscle-bar-group { margin-bottom: 8px; }
 .muscle-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: #ccc; margin-bottom: 3px; }
 .progress-track { width: 100%; height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
 .progress-fill { height: 100%; background: var(--accent-color); width: 0%; transition: width 1s ease; }
 
-/* ESTILO CAJA INSTALACIÓN (ROJO/BLANCO) */
-.pwa-install-box { 
-    background: #1a1a1a; 
-    border: 1px solid var(--accent-color); 
-    padding: 20px; 
-    border-radius: 12px; 
-    margin-top: 30px; 
-    text-align: left; 
-    box-shadow: 0 0 20px rgba(255, 51, 51, 0.15);
-}
-.pwa-install-box h4 { 
-    font-family: var(--font-sport); 
-    margin-bottom: 12px; 
-    font-size: 1rem; 
-    text-align: center; 
-    letter-spacing: 1px;
-    color: var(--accent-color); /* Rojo corporativo */
-}
-.pwa-steps { 
-    font-size: 0.85rem; 
-    color: white; 
-    margin-bottom: 8px; 
-    line-height: 1.6; 
-    display: flex; 
-    align-items: center; 
-    gap: 10px;
-    background: rgba(255,255,255,0.05);
-    padding: 8px 12px;
-    border-radius: 8px;
-}
-.pwa-steps i { font-size: 1.3rem; color: var(--accent-color); }
+.photo-tabs { display: flex; margin-bottom: 10px; background: #222; border-radius: 8px; padding: 2px; }
+.photo-tab { flex: 1; text-align: center; padding: 10px; font-size: 0.8rem; cursor: pointer; color: #888; border-radius: 6px; }
+.photo-tab.active { background: var(--accent-color); color: white; font-weight: bold; }
 
-/* RESTO */
-.notif-badge { display:none; background:var(--accent-color); color:white; border-radius:50%; width:20px; height:20px; text-align:center; line-height:20px; font-size:0.7rem; margin-left:10px; animation: breathe 2s infinite; cursor: pointer; }
+.view-container { display: none; opacity: 0; animation: fadeIn 0.3s forwards; }
+.view-container.active { display: block; opacity: 1; }
+@keyframes fadeIn { to { opacity: 1; } }
 #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 #loading-logo { width: 140px; border-radius: 25px; box-shadow: 0 0 40px rgba(255, 51, 51, 0.6); animation: breathe 3s infinite; clip-path: inset(0 round 25px); }
 .loading-text { margin-top: 30px; color: var(--accent-color); font-family: monospace; font-size: 1.1rem; letter-spacing: 4px; font-weight: bold; text-shadow: 0 0 10px var(--accent-color); animation: blink 0.8s infinite; }
