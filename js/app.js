@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App v14.0 (Fix Completo)...");
+console.log("⚡ FIT DATA: Iniciando App v15 (Final Correcta)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -98,8 +98,8 @@ window.enableNotifications = () => {
     }
     Notification.requestPermission().then((permission) => {
         if (permission === "granted") {
-            alert("✅ Vinculado.");
-            new Notification("Fit Data", { body: "Prueba de conexión.", icon: "logo.png" });
+            alert("✅ Vinculado. El reloj vibrará al acabar.");
+            new Notification("Fit Data", { body: "Prueba de conexión exitosa.", icon: "logo.png" });
         } else {
             alert("❌ Permiso denegado. Revisa la configuración.");
         }
@@ -113,18 +113,20 @@ window.navToCoach = () => {
     }
 };
 
-// --- FUNCIÓN PARA CONTROLAR MENÚS ---
+// --- GESTIÓN DE VISIBILIDAD BARRA INFERIOR ---
 function updateNavVisibility(isLoggedIn) {
     const bottomNav = document.getElementById('bottom-nav');
     const header = document.getElementById('main-header');
     
     if (isLoggedIn) {
         header.classList.remove('hidden');
+        // Mostrar barra inferior solo si es móvil
         if(window.innerWidth < 768 && bottomNav) {
             bottomNav.classList.remove('hidden');
             document.getElementById('main-container').style.paddingBottom = "80px";
         }
     } else {
+        // Login: Ocultar todo
         header.classList.add('hidden');
         if(bottomNav) bottomNav.classList.add('hidden');
         document.getElementById('main-container').style.paddingBottom = "20px";
@@ -147,7 +149,7 @@ function checkInstallMode() {
 let appReady = false;
 
 onAuthStateChanged(auth, async (user) => {
-    // Timeout para limpiar pantalla de carga si algo falla
+    // Timeout seguridad
     if (!appReady) {
         setTimeout(() => { 
             const loader = document.getElementById('loading-screen');
@@ -164,7 +166,7 @@ onAuthStateChanged(auth, async (user) => {
             
             // Botón Coach
             if(userData.role === 'admin' || userData.role === 'assistant') {
-                const btn = document.getElementById('top-btn-coach');
+                const btn = document.getElementById('btn-coach');
                 if(btn) btn.classList.remove('hidden');
             }
 
@@ -175,7 +177,6 @@ onAuthStateChanged(auth, async (user) => {
 
             if(userData.approved){
                 updateNavVisibility(true);
-                
                 loadRoutines();
                 const savedW = localStorage.getItem('fit_active_workout');
                 if(savedW) {
@@ -212,25 +213,24 @@ window.switchTab = (t) => {
     document.getElementById('main-container').scrollTop = 0;
     
     // Resetear activos
-    const navItems = document.querySelectorAll('.top-nav-item, .nav-item');
+    const navItems = document.querySelectorAll('.nav-item, .nav-item-top');
     navItems.forEach(n => n.classList.remove('active'));
     
-    // Activar botones correspondientes
     if (t === 'routines-view') {
         const btnM = document.getElementById('mobile-nav-routines');
         if(btnM) btnM.classList.add('active');
-        const btnPC = document.getElementById('pc-btn-routines');
+        const btnPC = document.getElementById('pc-nav-routines');
         if(btnPC) btnPC.classList.add('active');
     }
     if (t === 'profile-view') {
         const btnM = document.getElementById('mobile-nav-profile');
         if(btnM) btnM.classList.add('active');
-        const btnPC = document.getElementById('pc-btn-profile');
+        const btnPC = document.getElementById('pc-nav-profile');
         if(btnPC) btnPC.classList.add('active');
         loadProfile();
     }
     if (t === 'admin-view' || t === 'coach-detail-view') {
-        const btn = document.getElementById('top-btn-coach');
+        const btn = document.getElementById('btn-coach');
         if(btn) btn.classList.add('active');
     }
 };
@@ -550,7 +550,7 @@ window.loadProfile = async () => {
     if(chartInstance) chartInstance.destroy();
     const rawData = userData.weightHistory;
     const data = (rawData && rawData.length > 0) ? rawData : [70]; 
-    chartInstance = new Chart(ctx, { type:'line', data:{ labels:data.map((_,i)=>`T${i}`), datasets:[{label:'Kg', data:data, borderColor:'#ff3333', backgroundColor:'rgba(255,51,51,0.1)', fill:true, tension:0.4}] }, options:{plugins:{legend:{display:false}}, scales:{x:{display:false},y:{grid:{color:'#333'}}}, maintainAspectRatio: false}});
+    chartInstance = new Chart(ctx, { type:'line', data:{ labels:data.map((_,i)=>`T${i}`), datasets:[{label:'Kg', data:data, borderColor:'#ff3333', backgroundColor:'rgba(255,51,51,0.1)', fill:true, tension:0.4}] }, options:{plugins:{legend:{display:false}}, scales:{x:{display:false},y:{grid:{color:'#333'}}}, maintainAspectRatio:false} });
 
     const histDiv = document.getElementById('user-history-list'); histDiv.innerHTML = "Cargando...";
     try {
