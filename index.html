@@ -29,18 +29,20 @@
         </div>
         
         <div class="header-right">
-            <nav class="desktop-nav">
-                <div class="d-link active" id="d-nav-routines" onclick="window.switchTab('routines-view')">
-                    <span>🏋️</span> RUTINAS
+            <div class="desktop-nav desktop-only">
+                <div class="nav-item-top active" id="pc-btn-routines" onclick="window.switchTab('routines-view')">
+                    <span class="nav-icon">🏋️</span>
+                    <span class="nav-label">RUTINAS</span>
                 </div>
-                <div class="d-link" id="d-nav-profile" onclick="window.switchTab('profile-view')">
-                    <span>⚙️</span> PERFIL
+                <div class="nav-item-top" id="pc-btn-profile" onclick="window.switchTab('profile-view')">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-label">PERFIL</span>
                 </div>
-            </nav>
+            </div>
 
-            <div id="btn-coach" class="header-icon-btn hidden" onclick="window.loadAdminUsers(); window.switchTab('admin-view');">
-                <span class="top-icon">🛡️</span>
-                <span class="top-label coach-label">COACH</span>
+            <div id="btn-coach" class="nav-item-top hidden" onclick="window.navToCoach()">
+                <span class="nav-icon">🛡️</span>
+                <span class="nav-label coach-label">COACH</span>
             </div>
 
             <div id="notif-badge" class="notif-badge" onclick="window.dismissNotif()">🔔</div>
@@ -62,11 +64,10 @@
                 <button class="btn-outline" onclick="window.toggleAuth('register')" style="margin-top:20px;">CREAR CUENTA</button>
                 
                 <div id="installInstructions" class="pwa-install-box hidden">
-                     <h4><i class="bi bi-phone"></i> Instalar App</h4>
-                     <div class="pwa-steps"><i class="bi bi-apple"></i> <strong>iOS:</strong> Compartir ⎋ > Añadir a inicio.</div>
-                     <div class="pwa-steps"><i class="bi bi-android"></i> <strong>Android:</strong> Menú ⋮ > Instalar aplicación.</div>
+                    <h4><i class="bi bi-phone"></i> INSTALAR APP</h4>
+                    <div class="pwa-steps"><i class="bi bi-apple"></i> <strong>iOS:</strong> Compartir <span style="font-size:1.2rem">⎋</span> > Añadir a inicio.</div>
+                    <div class="pwa-steps"><i class="bi bi-android"></i> <strong>Android:</strong> Menú <span style="font-size:1.2rem">⋮</span> > Instalar aplicación.</div>
                 </div>
-
             </div>
             <div id="register-form" class="hidden">
                 <input type="text" id="reg-name" placeholder="Nombre">
@@ -146,12 +147,10 @@
             <div class="card">
                 <h3>EVOLUCIÓN FÍSICA</h3>
                 <div class="tip-box">💡 TIP: Usa siempre la misma luz, ropa y lugar.</div>
-                
                 <div class="photo-tabs">
                     <div class="photo-tab active" id="tab-front" onclick="window.switchPose('front')">👤 FRONTAL</div>
                     <div class="photo-tab" id="tab-back" onclick="window.switchPose('back')">🛡️ ESPALDA</div>
                 </div>
-
                 <div class="compare-wrapper">
                     <div class="slider-labels"><span class="label-tag">ANTES</span><span class="label-tag">AHORA</span></div>
                     <img src="" id="img-before" class="compare-img">
@@ -159,7 +158,6 @@
                     <div class="slider-handle" id="slider-handle"><div class="slider-btn"></div></div>
                 </div>
                 <input type="range" min="0" max="100" value="0" style="width:100%; margin-top:15px;" oninput="window.moveSlider(this.value)">
-                
                 <div class="photo-actions">
                     <button class="btn-outline" style="margin:0;" onclick="document.getElementById('f-before').click()">1. ANTES</button>
                     <button class="btn-danger btn-small" style="margin:0;" onclick="window.deletePhoto('before')">🗑️</button>
@@ -262,24 +260,8 @@
             <button class="btn-outline" style="border-color:#500; color:#f55; margin-bottom:20px;" onclick="window.logout()">CERRAR SESIÓN</button>
         </section>
 
-        <section id="workout-view" class="view-container">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; position:sticky; top:0; background:var(--bg-color); z-index:10; padding:10px 0; border-bottom:1px solid #222;">
-                <button onclick="window.switchTab('routines-view')" style="background:none; border:none; color:#666; font-size:1.5rem;">✕</button>
-                <div style="text-align:center;">
-                    <span style="font-size:0.6rem; color:#666;">TIEMPO</span><br>
-                    <span id="mini-timer" style="color:var(--accent-color); font-weight:bold;">00:00</span>
-                </div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <button class="btn-danger btn-small" style="margin:0; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px;" onclick="window.cancelWorkout()">🗑️</button>
-                    <button class="btn-small btn" style="margin:0;" onclick="window.promptRPE()">TERMINAR</button>
-                </div>
-            </div>
-            <h2 id="workout-title" style="margin-bottom:20px;">Entreno</h2>
-            <div id="workout-exercises"></div>
-        </section>
-
         <section id="admin-view" class="view-container">
-             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <h2>PANEL COACH</h2>
                 <button class="btn-small btn-outline" style="width:auto; margin:0;" onclick="window.loadAdminUsers()">🔄</button>
             </div>
@@ -297,7 +279,7 @@
             </div>
             <button class="btn-outline" onclick="window.switchTab('routines-view')">VOLVER</button>
         </section>
-        
+
         <section id="coach-detail-view" class="view-container">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <button class="btn-outline btn-small" style="width:auto; margin:0;" onclick="window.switchTab('admin-view')">← VOLVER</button>
@@ -315,6 +297,7 @@
                     <button class="btn btn-success" onclick="window.approveUser()">✅ APROBAR ACCESO</button>
                 </div>
             </div>
+            
              <div id="coach-stats-text" class="stat-pill-grid" style="margin-bottom:20px;"></div>
              <div class="card"><h3>📸 FOTOS</h3><div id="coach-photos-container"></div></div>
              <div class="card"><h3>GRÁFICA PESO</h3><div style="height:200px; width:100%; position:relative; margin-bottom: 20px;"><canvas id="coachWeightChart"></canvas></div></div>
@@ -323,16 +306,32 @@
              <button class="btn-danger btn" style="width:100%; margin-bottom:30px;" onclick="window.deleteUser()">🗑️ ELIMINAR ATLETA</button>
         </section>
 
+        <section id="workout-view" class="view-container">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; position:sticky; top:0; background:var(--bg-color); z-index:10; padding:10px 0; border-bottom:1px solid #222;">
+                <button onclick="window.switchTab('routines-view')" style="background:none; border:none; color:#666; font-size:1.5rem;">✕</button>
+                <div style="text-align:center;">
+                    <span style="font-size:0.6rem; color:#666;">TIEMPO</span><br>
+                    <span id="mini-timer" style="color:var(--accent-color); font-weight:bold;">00:00</span>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button class="btn-danger btn-small" style="margin:0; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px;" onclick="window.cancelWorkout()">🗑️</button>
+                    <button class="btn-small btn" style="margin:0;" onclick="window.promptRPE()">TERMINAR</button>
+                </div>
+            </div>
+            <h2 id="workout-title" style="margin-bottom:20px;">Entreno</h2>
+            <div id="workout-exercises"></div>
+        </section>
+
     </main>
 
-    <nav class="bottom-nav" id="bottom-nav">
-        <div class="nav-item active" id="nav-routines" onclick="window.switchTab('routines-view')">
+    <nav id="bottom-nav" class="bottom-nav mobile-only hidden">
+        <div class="nav-item active" id="mobile-nav-routines" onclick="window.switchTab('routines-view')">
             <span class="nav-icon">🏋️</span>
-            <span>Rutinas</span>
+            <span class="nav-label">RUTINAS</span>
         </div>
-        <div class="nav-item" id="nav-profile" onclick="window.switchTab('profile-view')">
+        <div class="nav-item" id="mobile-nav-profile" onclick="window.switchTab('profile-view')">
             <span class="nav-icon">⚙️</span>
-            <span>Perfil</span>
+            <span class="nav-label">PERFIL</span>
         </div>
     </nav>
 
@@ -346,7 +345,6 @@
             </div>
         </div>
     </div>
-    
     <div id="modal-rpe" class="modal">
         <div class="modal-content">
             <h3>FINALIZAR</h3>
@@ -374,7 +372,7 @@
             <button class="btn-outline" style="margin-top:20px;" onclick="document.getElementById('modal-progress').classList.remove('active')">CERRAR</button>
         </div>
     </div>
-    <div id="modal-video" class="modal" style="z-index: 20000;">
+    <div id="modal-video" class="modal" style="z-index: 3000;">
         <div class="modal-content" style="width:100%; max-width:600px; padding:10px; background:black;">
             <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden;">
                 <iframe id="youtube-frame" style="position:absolute; top:0; left:0; width:100%; height:100%;" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
@@ -387,4 +385,3 @@
 
 </body>
 </html>
-
