@@ -194,47 +194,42 @@ input:checked + .slider { background-color: var(--accent-color); } input:checked
 
 .coach-badge { background: #ffaa00; color: black; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; margin-left: 5px; }
 
-/* --- CAJA DE INSTALACIÓN PWA --- */
-
-/* El contenedor principal */
+/* --- CAJA DE INSTALACIÓN PWA (VERSIÓN COMPACTA) --- */
 .pwa-install-box {
-    background: #1a1a1a; /* Fondo gris muy oscuro */
-    border: 1px solid #ff3333; /* Borde Rojo Neón */
-    padding: 20px;
-    border-radius: 12px;
-    margin-top: 30px; /* Separación del botón de crear cuenta */
+    background: #1a1a1a;
+    border: 1px solid #ff3333;
+    padding: 10px;          /* Antes era 20px, ahora es más fino */
+    border-radius: 8px;
+    margin-top: 15px;       /* Antes 30px, subimos la caja */
     text-align: left;
-    box-shadow: 0 0 15px rgba(255, 51, 51, 0.2); /* Resplandor rojo suave */
+    box-shadow: 0 0 10px rgba(255, 51, 51, 0.15);
 }
 
-/* El título (H4) */
 .pwa-install-box h4 {
-    margin-bottom: 12px;
-    font-size: 1rem;
-    color: #ff3333; /* Texto Rojo */
+    margin-bottom: 8px;     /* Menos separación del título */
+    font-size: 0.9rem;      /* Título un poco más pequeño */
+    color: #ff3333;
     text-align: center;
-    font-family: 'Russo One', sans-serif; /* Fuente deportiva */
+    font-family: 'Russo One', sans-serif;
     letter-spacing: 1px;
     margin-top: 0;
 }
 
-/* Cada línea de instrucciones */
 .pwa-steps {
-    font-size: 0.85rem;
-    color: #cccccc; /* Blanco apagado para leer bien */
-    margin-bottom: 8px;
-    line-height: 1.6;
+    font-size: 0.75rem;     /* Letra más pequeña (compacta) */
+    color: #cccccc;
+    margin-bottom: 4px;     /* Menos espacio entre líneas */
+    line-height: 1.3;       /* Líneas más juntas */
     display: flex;
     align-items: center;
-    gap: 10px; /* Espacio entre icono y texto */
-    background: rgba(255, 255, 255, 0.05); /* Fondo sutil en cada línea */
-    padding: 8px 12px;
-    border-radius: 8px;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 6px 10px;      /* Barras más finas */
+    border-radius: 6px;
 }
 
-/* Los iconos de Apple y Android */
 .pwa-steps i {
-    font-size: 1.3rem;
+    font-size: 1rem;        /* Iconos ajustados */
     color: #ff3333;
 }
 
@@ -242,3 +237,4 @@ input:checked + .slider { background-color: var(--accent-color); } input:checked
 .hidden {
     display: none !important;
 }
+
