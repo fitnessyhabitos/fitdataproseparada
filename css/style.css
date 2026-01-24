@@ -31,6 +31,28 @@ body {
     overscroll-behavior: none; 
 }
 
+#main-container {
+    /* 1. Ocupar el espacio sobrante */
+    flex: 1;                 /* Esto hace que crezca y ocupe todo el hueco entre header y footer */
+    position: relative;      /* Para que los elementos absolutos internos funcionen bien */
+    width: 100%;
+
+    /* 2. Scroll Interno (La clave) */
+    overflow-y: auto;        /* Habilita el scroll solo aquí */
+    overflow-x: hidden;      /* Evita scroll lateral */
+    -webkit-overflow-scrolling: touch; /* Imprescindible para suavidad en iPhone */
+    
+    /* 3. Comportamiento del rebote */
+    overscroll-behavior-y: contain; /* El rebote se queda dentro, no mueve toda la app */
+
+    /* 4. Espaciado de seguridad */
+    /* Ajusta estos px según la altura real de tu barra de arriba y abajo */
+    padding-top: calc(var(--header-height) + var(--safe-top) + 20px);
+    padding-bottom: calc(var(--footer-height) + var(--safe-bottom) + 100px); 
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
 .hidden { display: none !important; }
 
 /* UI KIT */
@@ -270,3 +292,4 @@ canvas {
 .card {
     touch-action: pan-y;
 }
+
