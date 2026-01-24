@@ -191,4 +191,54 @@ input:checked + .slider { background-color: var(--accent-color); } input:checked
 /* COLORES ADMIN */
 .admin-user-row.is-coach { border-left: 3px solid #ffaa00; background: rgba(255, 170, 0, 0.05); }
 .admin-user-row.is-me { border-left: 3px solid #00ff88; background: rgba(0, 255, 136, 0.05); }
+
 .coach-badge { background: #ffaa00; color: black; padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; font-weight: bold; margin-left: 5px; }
+
+/* --- CAJA DE INSTALACIÓN PWA --- */
+
+/* El contenedor principal */
+.pwa-install-box {
+    background: #1a1a1a; /* Fondo gris muy oscuro */
+    border: 1px solid #ff3333; /* Borde Rojo Neón */
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 30px; /* Separación del botón de crear cuenta */
+    text-align: left;
+    box-shadow: 0 0 15px rgba(255, 51, 51, 0.2); /* Resplandor rojo suave */
+}
+
+/* El título (H4) */
+.pwa-install-box h4 {
+    margin-bottom: 12px;
+    font-size: 1rem;
+    color: #ff3333; /* Texto Rojo */
+    text-align: center;
+    font-family: 'Russo One', sans-serif; /* Fuente deportiva */
+    letter-spacing: 1px;
+    margin-top: 0;
+}
+
+/* Cada línea de instrucciones */
+.pwa-steps {
+    font-size: 0.85rem;
+    color: #cccccc; /* Blanco apagado para leer bien */
+    margin-bottom: 8px;
+    line-height: 1.6;
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espacio entre icono y texto */
+    background: rgba(255, 255, 255, 0.05); /* Fondo sutil en cada línea */
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+/* Los iconos de Apple y Android */
+.pwa-steps i {
+    font-size: 1.3rem;
+    color: #ff3333;
+}
+
+/* Clase para ocultarlo si ya está instalada */
+.hidden {
+    display: none !important;
+}
