@@ -9,8 +9,9 @@
     <meta name="theme-color" content="#050505">
     <title>Fit Data | High Performance</title>
     <link rel="icon" href="favicon.ico">
-    <link rel="apple-touch-icon" href="https://fitdatatg.web.app/logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -29,11 +30,11 @@
         
         <div class="header-right">
             <div class="desktop-nav desktop-only">
-                <div class="nav-item-top active" id="pc-nav-routines" onclick="window.switchTab('routines-view')">
+                <div class="nav-item-top active" id="pc-btn-routines" onclick="window.switchTab('routines-view')">
                     <span class="nav-icon">🏋️</span>
                     <span class="nav-label">RUTINAS</span>
                 </div>
-                <div class="nav-item-top" id="pc-nav-profile" onclick="window.switchTab('profile-view')">
+                <div class="nav-item-top" id="pc-btn-profile" onclick="window.switchTab('profile-view')">
                     <span class="nav-icon">⚙️</span>
                     <span class="nav-label">PERFIL</span>
                 </div>
@@ -62,14 +63,10 @@
                 <div class="link-text" onclick="window.recoverPass()">¿Olvidaste tu contraseña?</div>
                 <button class="btn-outline" onclick="window.toggleAuth('register')" style="margin-top:20px;">CREAR CUENTA</button>
                 
-                <div id="installInstructions" class="install-box hidden">
-                    <h4>📲 INSTALAR APP</h4>
-                    <div class="pwa-steps">
-                        <span style="font-size:1.2rem;"></span> <strong>iOS:</strong> Pulsa <span class="ios-share-icon"></span> y selecciona <b>"Añadir a inicio"</b>.
-                    </div>
-                    <div class="pwa-steps" style="margin-top:8px;">
-                        <span style="font-size:1.2rem;">🤖</span> <strong>Android:</strong> Pulsa <b>(⋮)</b> y <b>"Instalar aplicación"</b>.
-                    </div>
+                <div id="installInstructions" class="pwa-install-box hidden">
+                    <h4><i class="bi bi-phone"></i> INSTALAR APP</h4>
+                    <div class="pwa-steps"><i class="bi bi-apple"></i> <strong>iOS:</strong> Compartir <span style="font-size:1.2rem">⎋</span> > Añadir a inicio.</div>
+                    <div class="pwa-steps"><i class="bi bi-android"></i> <strong>Android:</strong> Menú <span style="font-size:1.2rem">⋮</span> > Instalar.</div>
                 </div>
             </div>
             <div id="register-form" class="hidden">
@@ -150,12 +147,10 @@
             <div class="card">
                 <h3>EVOLUCIÓN FÍSICA</h3>
                 <div class="tip-box">💡 TIP: Usa siempre la misma luz, ropa y lugar.</div>
-                
                 <div class="photo-tabs">
                     <div class="photo-tab active" id="tab-front" onclick="window.switchPose('front')">👤 FRONTAL</div>
                     <div class="photo-tab" id="tab-back" onclick="window.switchPose('back')">🛡️ ESPALDA</div>
                 </div>
-
                 <div class="compare-wrapper">
                     <div class="slider-labels"><span class="label-tag">ANTES</span><span class="label-tag">AHORA</span></div>
                     <img src="" id="img-before" class="compare-img">
@@ -281,7 +276,7 @@
             <div id="workout-exercises"></div>
         </section>
 
-        <section id="admin-view" class="view-container">
+         <section id="admin-view" class="view-container">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <h2>PANEL COACH</h2>
                 <button class="btn-small btn-outline" style="width:auto; margin:0;" onclick="window.loadAdminUsers()">🔄</button>
@@ -300,7 +295,7 @@
             </div>
             <button class="btn-outline" onclick="window.switchTab('routines-view')">VOLVER</button>
         </section>
-
+        
         <section id="coach-detail-view" class="view-container">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <button class="btn-outline btn-small" style="width:auto; margin:0;" onclick="window.switchTab('admin-view')">← VOLVER</button>
@@ -318,7 +313,8 @@
                     <button class="btn btn-success" onclick="window.approveUser()">✅ APROBAR ACCESO</button>
                 </div>
             </div>
-            <div id="coach-stats-text" class="stat-pill-grid" style="margin-bottom:20px;"></div>
+            
+             <div id="coach-stats-text" class="stat-pill-grid" style="margin-bottom:20px;"></div>
              <div class="card"><h3>📸 FOTOS</h3><div id="coach-photos-container"></div></div>
              <div class="card"><h3>GRÁFICA PESO</h3><div style="height:200px; width:100%; position:relative; margin-bottom: 20px;"><canvas id="coachWeightChart"></canvas></div></div>
              <div class="card"><h3>RUTINAS ASIGNADAS</h3><div id="coach-assigned-list"></div><label>Asignar Nueva:</label><input type="text" placeholder="🔍" id="coach-routine-filter" oninput="window.filterCoachRoutines(this.value)"><select id="coach-routine-select"></select><button class="btn" onclick="window.assignRoutine()">ENVIAR</button></div>
@@ -327,7 +323,7 @@
         </section>
 
     </main>
-
+    
     <nav id="bottom-nav" class="bottom-nav mobile-only hidden">
         <div class="nav-item active" id="mobile-nav-routines" onclick="window.switchTab('routines-view')">
             <span class="nav-icon">🏋️</span>
