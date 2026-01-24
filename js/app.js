@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App v15 (Final Correcta)...");
+console.log("⚡ FIT DATA: Iniciando App (Menu Logic Fix)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -113,44 +113,43 @@ window.navToCoach = () => {
     }
 };
 
-// --- GESTIÓN DE VISIBILIDAD BARRA INFERIOR ---
+// --- GESTIÓN DE MENÚS (CLAVE) ---
 function updateNavVisibility(isLoggedIn) {
     const bottomNav = document.getElementById('bottom-nav');
     const header = document.getElementById('main-header');
     
     if (isLoggedIn) {
+        // Usuario logueado: Mostramos header siempre
         header.classList.remove('hidden');
-        // Mostrar barra inferior solo si es móvil
+        
+        // Barra inferior: Solo si es pantalla pequeña
         if(window.innerWidth < 768 && bottomNav) {
             bottomNav.classList.remove('hidden');
             document.getElementById('main-container').style.paddingBottom = "80px";
         }
     } else {
-        // Login: Ocultar todo
+        // Login: Ocultar TODO
         header.classList.add('hidden');
         if(bottomNav) bottomNav.classList.add('hidden');
         document.getElementById('main-container').style.paddingBottom = "20px";
     }
 }
 
-// --- DETECTAR INSTALACIÓN ---
+// --- CHECK INSTALACIÓN PWA ---
 function checkInstallMode() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     const banner = document.getElementById('installInstructions');
-    if(banner) {
-        if (isStandalone) {
-            banner.classList.add('hidden');
-        } else {
-            banner.classList.remove('hidden');
-        }
+    if (isStandalone) {
+        if(banner) banner.classList.add('hidden');
+    } else {
+        if(banner) banner.classList.remove('hidden');
     }
 }
 
 let appReady = false;
 
 onAuthStateChanged(auth, async (user) => {
-    // Timeout seguridad
-    if (!appReady) {
+    if(!appReady) {
         setTimeout(() => { 
             const loader = document.getElementById('loading-screen');
             if(loader) loader.style.display = 'none'; 
@@ -164,9 +163,8 @@ onAuthStateChanged(auth, async (user) => {
             userData = snap.data();
             checkPhotoReminder();
             
-            // Botón Coach
             if(userData.role === 'admin' || userData.role === 'assistant') {
-                const btn = document.getElementById('btn-coach');
+                const btn = document.getElementById('top-btn-coach');
                 if(btn) btn.classList.remove('hidden');
             }
 
@@ -212,25 +210,24 @@ window.switchTab = (t) => {
     document.getElementById(t).classList.add('active');
     document.getElementById('main-container').scrollTop = 0;
     
-    // Resetear activos
-    const navItems = document.querySelectorAll('.nav-item, .nav-item-top');
+    const navItems = document.querySelectorAll('.top-nav-item, .nav-item');
     navItems.forEach(n => n.classList.remove('active'));
     
     if (t === 'routines-view') {
         const btnM = document.getElementById('mobile-nav-routines');
         if(btnM) btnM.classList.add('active');
-        const btnPC = document.getElementById('pc-nav-routines');
+        const btnPC = document.getElementById('pc-btn-routines');
         if(btnPC) btnPC.classList.add('active');
     }
     if (t === 'profile-view') {
         const btnM = document.getElementById('mobile-nav-profile');
         if(btnM) btnM.classList.add('active');
-        const btnPC = document.getElementById('pc-nav-profile');
+        const btnPC = document.getElementById('pc-btn-profile');
         if(btnPC) btnPC.classList.add('active');
         loadProfile();
     }
     if (t === 'admin-view' || t === 'coach-detail-view') {
-        const btn = document.getElementById('btn-coach');
+        const btn = document.getElementById('top-btn-coach');
         if(btn) btn.classList.add('active');
     }
 };
