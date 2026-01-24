@@ -119,11 +119,13 @@
                 </div>
                 <button class="btn-outline btn-small" style="width:auto; margin:0;" onclick="window.loadProfile()">↻</button>
             </div>
+
             <div class="card">
                 <h3>HISTORIAL RECIENTE</h3>
                 <div id="user-history-list" style="font-size:0.8rem; color:#888;">Cargando...</div>
                 <button class="btn-outline" style="border-color:var(--success-color); color:var(--success-color); margin-top:15px;" onclick="window.openProgress()">📈 EVOLUCIÓN DETALLADA</button>
             </div>
+
             <div class="card">
                 <h3>ESTADÍSTICAS TOTALES</h3>
                 <div class="stats-grid">
@@ -133,10 +135,12 @@
                     <div class="stat-box"><span class="stat-num" id="stat-reps">0</span><span class="stat-label">Reps</span></div>
                 </div>
             </div>
+
             <div class="card">
                 <h3>MAPA MUSCULAR</h3>
                 <div id="heatmap-container"></div>
             </div>
+
             <div class="card">
                 <h3>EVOLUCIÓN FÍSICA</h3>
                 <div class="tip-box">💡 TIP: Usa siempre la misma luz, ropa y lugar.</div>
@@ -163,11 +167,13 @@
                     <span id="date-before">-</span><span id="date-after">-</span>
                 </div>
             </div>
+
             <div class="card">
                 <h3>PESO CORPORAL</h3>
                 <div style="height:200px; position:relative; margin-bottom:10px;"><canvas id="weightChart"></canvas></div>
                 <button class="btn-outline" onclick="window.addWeightEntry()">+ REGISTRAR PESO</button>
             </div>
+
             <div id="user-skinfolds-section" class="card hidden">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <h3 style="margin:0;">🤏 PLIEGUES (% GRASA)</h3>
@@ -186,6 +192,7 @@
                 </div>
                 <button class="btn-small btn-outline" onclick="window.calculateAndSaveSkinfolds()">CALCULAR Y GUARDAR</button>
             </div>
+
             <div id="user-measures-section" class="card hidden">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                     <h3 style="margin:0;">📏 MEDIDAS (cm)</h3>
@@ -204,6 +211,7 @@
                 </div>
                 <button class="btn-small btn-outline" onclick="window.saveMeasurements()">GUARDAR MEDIDAS</button>
             </div>
+
             <div class="card">
                 <h3>CONFIGURACIÓN</h3>
                 <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
@@ -245,23 +253,8 @@
                 </div>
                 <button class="btn-outline" style="margin-top:15px;" onclick="window.saveConfig()">GUARDAR AJUSTES</button>
             </div>
-            <button class="btn-outline" style="border-color:#500; color:#f55; margin-bottom:20px;" onclick="window.logout()">CERRAR SESIÓN</button>
-        </section>
 
-        <section id="workout-view" class="view-container">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; position:sticky; top:0; background:var(--bg-color); z-index:10; padding:10px 0; border-bottom:1px solid #222;">
-                <button onclick="window.switchTab('routines-view')" style="background:none; border:none; color:#666; font-size:1.5rem;">✕</button>
-                <div style="text-align:center;">
-                    <span style="font-size:0.6rem; color:#666;">TIEMPO</span><br>
-                    <span id="mini-timer" style="color:var(--accent-color); font-weight:bold;">00:00</span>
-                </div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <button class="btn-danger btn-small" style="margin:0; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px;" onclick="window.cancelWorkout()">🗑️</button>
-                    <button class="btn-small btn" style="margin:0;" onclick="window.promptRPE()">TERMINAR</button>
-                </div>
-            </div>
-            <h2 id="workout-title" style="margin-bottom:20px;">Entreno</h2>
-            <div id="workout-exercises"></div>
+            <button class="btn-outline" style="border-color:#500; color:#f55; margin-bottom:20px;" onclick="window.logout()">CERRAR SESIÓN</button>
         </section>
 
         <section id="admin-view" class="view-container">
@@ -301,10 +294,49 @@
                     <button class="btn btn-success" onclick="window.approveUser()">✅ APROBAR ACCESO</button>
                 </div>
             </div>
-             <div id="coach-stats-text" class="stat-pill-grid" style="margin-bottom:20px;"></div>
-             <div class="card"><h3>📸 FOTOS</h3><div id="coach-photos-container"></div></div>
-             <div class="card"><h3>GRÁFICA PESO</h3><div style="height:200px; width:100%; position:relative; margin-bottom: 20px;"><canvas id="coachWeightChart"></canvas></div></div>
-             <div class="card">
+            
+            <div class="card">
+                <h3>⚙️ CONFIGURACIÓN ATLETA</h3>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span>Habilitar Pliegues</span>
+                    <label class="switch"><input type="checkbox" id="coach-toggle-skinfolds" onchange="window.toggleUserFeature('showSkinfolds', this.checked)"><span class="slider"></span></label>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span>Habilitar Medidas</span>
+                    <label class="switch"><input type="checkbox" id="coach-toggle-measures" onchange="window.toggleUserFeature('showMeasurements', this.checked)"><span class="slider"></span></label>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                    <span>Habilitar Vídeos</span>
+                    <label class="switch"><input type="checkbox" id="coach-toggle-videos" onchange="window.toggleUserFeature('showVideos', this.checked)"><span class="slider"></span></label>
+                </div>
+            </div>
+
+            <div id="coach-view-skinfolds" class="card hidden">
+                <h3>% GRASA (JP7)</h3>
+                <div style="height:200px; width:100%; position:relative;"><canvas id="coachFatChart"></canvas></div>
+            </div>
+            <div id="coach-view-measures" class="card hidden">
+                <h3>MEDIDAS (cm)</h3>
+                <div style="height:250px; width:100%; position:relative;"><canvas id="coachMeasuresChart"></canvas></div>
+            </div>
+
+            <div id="coach-stats-text" class="stat-pill-grid" style="margin-bottom:20px;"></div>
+            
+            <div class="card">
+                <h3>📸 FOTOS</h3>
+                <div class="photo-tabs">
+                    <div class="photo-tab active" id="coach-tab-front" onclick="window.switchCoachPose('front')">FRONTAL</div>
+                    <div class="photo-tab" id="coach-tab-back" onclick="window.switchCoachPose('back')">ESPALDA</div>
+                </div>
+                <div id="coach-photos-container"></div>
+                <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:0.7rem; color:#888;">
+                    <span id="coach-date-before">-</span><span id="coach-date-after">-</span>
+                </div>
+            </div>
+
+            <div class="card"><h3>GRÁFICA PESO</h3><div style="height:200px; width:100%; position:relative; margin-bottom: 20px;"><canvas id="coachWeightChart"></canvas></div></div>
+            
+            <div class="card">
                  <h3>RUTINAS ASIGNADAS</h3>
                  <div id="coach-assigned-list"></div>
                  <label>Asignar Nueva:</label>
@@ -315,8 +347,25 @@
                  <select id="coach-routine-select" style="margin-top:10px;"></select>
                  <button class="btn" style="margin-top:10px;" onclick="window.assignRoutine()">ENVIAR</button>
              </div>
+             
              <div class="card"><h3>HISTORIAL</h3><div id="coach-history-list"></div></div>
              <button class="btn-danger btn" style="width:100%; margin-bottom:30px;" onclick="window.deleteUser()">🗑️ ELIMINAR ATLETA</button>
+        </section>
+
+        <section id="workout-view" class="view-container">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; position:sticky; top:0; background:var(--bg-color); z-index:10; padding:10px 0; border-bottom:1px solid #222;">
+                <button onclick="window.switchTab('routines-view')" style="background:none; border:none; color:#666; font-size:1.5rem;">✕</button>
+                <div style="text-align:center;">
+                    <span style="font-size:0.6rem; color:#666;">TIEMPO</span><br>
+                    <span id="mini-timer" style="color:var(--accent-color); font-weight:bold;">00:00</span>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button class="btn-danger btn-small" style="margin:0; width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:8px;" onclick="window.cancelWorkout()">🗑️</button>
+                    <button class="btn-small btn" style="margin:0;" onclick="window.promptRPE()">TERMINAR</button>
+                </div>
+            </div>
+            <h2 id="workout-title" style="margin-bottom:20px;">Entreno</h2>
+            <div id="workout-exercises"></div>
         </section>
 
     </main>
