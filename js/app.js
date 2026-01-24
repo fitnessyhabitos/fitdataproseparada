@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App v16.0 (Final Stable)...");
+console.log("⚡ FIT DATA: Iniciando App v16.5 (Final Polish)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -106,6 +106,7 @@ window.enableNotifications = () => {
     });
 };
 
+// --- FUNCIÓN COACH ---
 window.navToCoach = () => {
     if (userData.role === 'admin' || userData.role === 'assistant') {
         window.loadAdminUsers();
@@ -119,18 +120,22 @@ function updateNavVisibility(isLoggedIn) {
     const header = document.getElementById('main-header');
     
     if (isLoggedIn) {
+        // Logueado: Mostrar header
         header.classList.remove('hidden');
+        // Mostrar barra inferior solo si es móvil
         if(window.innerWidth < 768 && bottomNav) {
             bottomNav.classList.remove('hidden');
             document.getElementById('main-container').style.paddingBottom = "80px";
         }
     } else {
+        // No Logueado: Ocultar todo
         header.classList.add('hidden');
         if(bottomNav) bottomNav.classList.add('hidden');
         document.getElementById('main-container').style.paddingBottom = "20px";
     }
 }
 
+// --- DETECTAR INSTALACIÓN ---
 function checkInstallMode() {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
     const banner = document.getElementById('installInstructions');
@@ -204,13 +209,18 @@ function checkPhotoReminder() {
 }
 
 window.switchTab = (t) => {
+    // 1. Ocultar todas las vistas
     document.querySelectorAll('.view-container').forEach(e => e.classList.remove('active'));
+    // 2. Mostrar la seleccionada
     document.getElementById(t).classList.add('active');
+    // 3. Resetear scroll
     document.getElementById('main-container').scrollTop = 0;
     
-    const navItems = document.querySelectorAll('.nav-item-top, .nav-item');
+    // 4. Actualizar botones (Header y Bottom Nav)
+    const navItems = document.querySelectorAll('.top-nav-item, .nav-item');
     navItems.forEach(n => n.classList.remove('active'));
     
+    // Activar simultáneamente PC y Móvil
     if (t === 'routines-view') {
         const btnM = document.getElementById('mobile-nav-routines');
         if(btnM) btnM.classList.add('active');
@@ -527,118 +537,369 @@ function renderMeasureChart(canvasId, historyData) {
     if(canvasId === 'chartMeasures') measureChartInstance = newChart; else coachMeasureChart = newChart;
 }
 
-window.viewWorkoutDetails = (title, dataStr, noteStr) => {
-    if(!dataStr) return;
-    const data = JSON.parse(decodeURIComponent(dataStr));
-    const note = noteStr ? decodeURIComponent(noteStr) : "Sin notas.";
-    const content = document.getElementById('detail-content');
-    document.getElementById('detail-title').innerText = title;
-    let html = `<div class="note-display">📝 ${note}</div>`;
-    data.forEach(ex => {
-        html += `<div style="margin-bottom:10px; border-bottom:1px solid #333; padding-bottom:5px;"><strong style="color:white;">${ex.n}</strong><div style="display:flex; flex-wrap:wrap; gap:5px; margin-top:5px;">`;
-        ex.s.forEach((set, i) => { html += `<span style="background:#222; padding:3px 6px; border-radius:4px; border:1px solid #444; color:#ccc;">#${i+1}: <b>${set.r}</b> x ${set.w}kg</span>`; });
-        html += `</div></div>`;
-    });
-    content.innerHTML = html;
-    document.getElementById('modal-details').classList.add('active');
-};
+window.loadProfile = async () => {
+    document.getElementById('profile-name').innerText = userData.name;
+    if(userData.photo) { document.getElementById('avatar-text').style.display='none'; document.getElementById('avatar-img').src = userData.photo; document.getElementById('avatar-img').style.display='block'; }
+    updatePhotoDisplay(userData);
+    
+    document.getElementById('cfg-show-skinfolds').checked = !!userData.showSkinfolds;
+    document.getElementById('cfg-show-measures').checked = !!userData.showMeasurements;
+    if(userData.restTime) document.getElementById('cfg-rest-time').value = userData.restTime;
+    
+    document.getElementById('stat-workouts').innerText = userData.stats.workouts || 0;
+    document.getElementById('stat-kg').innerText = userData.stats.totalKg ? (userData.stats.totalKg/1000).toFixed(1)+'t' : 0;
+    document.getElementById('stat-sets').innerText = userData.stats.totalSets || 0;
+    document.getElementById('stat-reps').innerText = userData.stats.totalReps || 0;
 
-window.openVideo = (url) => {
-    if (!url) return;
-    let embedUrl = url;
-    if (url.includes("watch?v=")) embedUrl = url.replace("watch?v=", "embed/");
-    else if (url.includes("youtu.be/")) embedUrl = url.replace("youtu.be/", "youtube.com/embed/");
-    embedUrl += "?autoplay=1&rel=0";
-    document.getElementById('youtube-frame').src = embedUrl;
-    document.getElementById('modal-video').classList.add('active');
-};
+    const ctx = document.getElementById('weightChart'); 
+    if(chartInstance) chartInstance.destroy();
+    const rawData = userData.weightHistory;
+    const data = (rawData && rawData.length > 0) ? rawData : [70]; 
+    chartInstance = new Chart(ctx, { type:'line', data:{ labels:data.map((_,i)=>`T${i}`), datasets:[{label:'Kg', data:data, borderColor:'#ff3333', backgroundColor:'rgba(255,51,51,0.1)', fill:true, tension:0.4}] }, options:{plugins:{legend:{display:false}}, scales:{x:{display:false},y:{grid:{color:'#333'}}}, maintainAspectRatio:false} });
 
-window.closeVideo = () => {
-    document.getElementById('modal-video').classList.remove('active');
-    document.getElementById('youtube-frame').src = ""; 
-};
-
-window.approveUser = async () => {
-    if(!selectedUserCoach) return;
-    if(confirm("¿Confirmas que quieres APROBAR a este atleta?")) {
-        try {
-            await updateDoc(doc(db, "users", selectedUserCoach), { approved: true });
-            alert("✅ Usuario Aprobado.");
-            openCoachView(selectedUserCoach, selectedUserObj);
-        } catch(e) { alert("Error: " + e.message); }
-    }
-};
-
-window.deleteUser = async () => {
-    if(!selectedUserCoach) return;
-    const confirmName = prompt("⚠ IRREVERSIBLE: Escribe 'BORRAR' para eliminar:");
-    if(confirmName === 'BORRAR') {
-        try {
-            await deleteDoc(doc(db, "users", selectedUserCoach));
-            alert("🗑️ Usuario eliminado.");
-            window.loadAdminUsers();
-            window.switchTab('admin-view');
-        } catch(e) { alert("Error: " + e.message); }
-    }
-};
-
-window.toggleUserFeature = async (feature, value) => {
-    if(!selectedUserCoach) return;
-    const update = {};
-    update[feature] = value;
-    await updateDoc(doc(db, "users", selectedUserCoach), update);
-    openCoachView(selectedUserCoach, selectedUserObj);
-};
-
-window.updateUserRole = async (newRole) => {
-    if(!selectedUserCoach) return;
-    if(confirm(`¿Cambiar rol a ${newRole}?`)) {
-        await updateDoc(doc(db,"users",selectedUserCoach), {role: newRole});
-        alert("Rol actualizado"); openCoachView(selectedUserCoach, selectedUserObj);
-    }
-};
-
-window.assignToAssistant = async (assistantId) => {
-    if(!selectedUserCoach) return;
-    await updateDoc(doc(db,"users",selectedUserCoach), {assignedCoach: assistantId});
-    alert("Atleta reasignado"); openCoachView(selectedUserCoach, selectedUserObj);
-};
-
-window.goToCreateRoutine = () => {
-    window.switchTab('routines-view');
-    window.openEditor();
-};
-
-window.filterCoachRoutines = (text) => {
-    const s = document.getElementById('coach-routine-select');
-    s.innerHTML = '';
-    const term = normalizeText(text);
-    const filtered = allRoutinesCache.filter(r => normalizeText(r.name).includes(term));
-    if(filtered.length === 0) { s.innerHTML = '<option value="">No encontrada</option>'; } 
-    else { filtered.forEach(r => { const o = document.createElement('option'); o.value = r.id; o.innerText = r.name; s.appendChild(o); }); }
-};
-
-window.assignRoutine = async () => {
-    const select = document.getElementById('coach-routine-select');
-    const rid = select.value;
-    if(!rid || rid === "" || rid === "Cargando..." || rid === "No encontrada") { return alert("❌ Por favor selecciona una rutina válida."); }
-    if(!selectedUserCoach) return alert("❌ No hay usuario seleccionado.");
+    const histDiv = document.getElementById('user-history-list'); histDiv.innerHTML = "Cargando...";
     try {
-        const rRef = doc(db, "routines", rid); 
-        await updateDoc(rRef, { assignedTo: arrayUnion(selectedUserCoach) }); 
-        alert("✅ Rutina Asignada Correctamente");
-        openCoachView(selectedUserCoach, selectedUserObj); 
-    } catch(e) { alert("Error asignando: " + e.message); }
+        const q = query(collection(db, "workouts"), where("uid", "==", currentUser.uid));
+        const snap = await getDocs(q);
+        const workouts = snap.docs.map(d => ({id:d.id, ...d.data()})).sort((a,b) => b.date - a.date).slice(0, 5);
+        histDiv.innerHTML = workouts.length ? '' : "Sin historial.";
+        workouts.forEach(d => {
+            const date = d.date ? new Date(d.date.seconds*1000).toLocaleDateString() : '-';
+            const detailsStr = d.details ? encodeURIComponent(JSON.stringify(d.details)) : "";
+            const noteStr = d.note ? encodeURIComponent(d.note) : "";
+            const btnVer = d.details ? `<button class="btn-small btn-outline" style="margin:0; padding:2px 6px;" onclick="viewWorkoutDetails('${d.routine}', '${detailsStr}', '${noteStr}')">🔍</button>` : '';
+            histDiv.innerHTML += `<div class="history-row" style="grid-template-columns: 1fr 40px;"><div><span style="color:#accent-color">${date}</span> - ${d.routine}</div><div style="text-align:right;">${btnVer}</div></div>`;
+        });
+    } catch(e) { histDiv.innerHTML = "Error."; }
+
+    if(userData.showMeasurements) {
+        document.getElementById('user-measures-section').classList.remove('hidden');
+        if(userData.measureHistory && userData.measureHistory.length > 0) renderMeasureChart('chartMeasures', userData.measureHistory);
+    } else { document.getElementById('user-measures-section').classList.add('hidden'); }
+
+    if(userData.showSkinfolds) {
+        document.getElementById('user-skinfolds-section').classList.remove('hidden');
+        if(userData.skinfoldHistory && userData.skinfoldHistory.length > 0) {
+            const ctxF = document.getElementById('chartFat');
+            if(fatChartInstance) fatChartInstance.destroy();
+            const dataF = userData.skinfoldHistory.map(f => f.fat || 0);
+            const labels = userData.skinfoldHistory.map(f => new Date(f.date.seconds*1000).toLocaleDateString());
+            fatChartInstance = new Chart(ctxF, { type: 'line', data: { labels: labels, datasets: [{ label: '% Grasa', data: dataF, borderColor: '#ffaa00', tension: 0.3 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#333' } }, x: { display: false } }, maintainAspectRatio: false } });
+        }
+    } else { document.getElementById('user-skinfolds-section').classList.add('hidden'); }
+
+    const muscles = ["Pecho","Espalda","Cuádriceps","Isquios","Glúteos","Hombros","Bíceps","Tríceps"];
+    const hC = document.getElementById('heatmap-container'); hC.innerHTML = '';
+    const mS = userData.muscleStats || {};
+    muscles.forEach(m=>{
+        const count = mS[m] || 0;
+        const pct = Math.min((count / 20) * 100, 100); 
+        const d = document.createElement('div'); d.className = 'muscle-bar-group';
+        d.innerHTML = `<div class="muscle-label"><span>${m}</span><span>${count} series</span></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+        hC.appendChild(d);
+    });
+}
+
+window.saveSelfConfig = async (feature, value) => {
+    const update = {}; update[feature] = value;
+    await updateDoc(doc(db, "users", currentUser.uid), update);
+    userData[feature] = value; 
+    window.loadProfile();
 };
 
-window.unassignRoutine = async (rid) => {
-    if(confirm("¿Quitar esta rutina al atleta?")) {
-        await updateDoc(doc(db, "routines", rid), { assignedTo: arrayRemove(selectedUserCoach) });
-        openCoachView(selectedUserCoach, selectedUserObj); 
+window.saveMeasurements = async () => {
+    const data = {
+        date: new Date(),
+        chest: document.getElementById('m-chest').value,
+        waist: document.getElementById('m-waist').value,
+        hip: document.getElementById('m-hip').value,
+        arm: document.getElementById('m-arm').value,
+        thigh: document.getElementById('m-thigh').value,
+        calf: document.getElementById('m-calf').value,
+        shoulder: document.getElementById('m-shoulder').value
+    };
+    await updateDoc(doc(db, "users", currentUser.uid), { measureHistory: arrayUnion(data), measurements: data });
+    alert("Guardado ✅"); window.loadProfile();
+};
+
+window.calculateAndSaveSkinfolds = async () => {
+    const s = {
+        chest: parseFloat(document.getElementById('p-chest').value)||0, axilla: parseFloat(document.getElementById('p-axilla').value)||0,
+        tricep: parseFloat(document.getElementById('p-tricep').value)||0, subscap: parseFloat(document.getElementById('p-subscap').value)||0,
+        abdo: parseFloat(document.getElementById('p-abdo').value)||0, supra: parseFloat(document.getElementById('p-supra').value)||0,
+        thigh: parseFloat(document.getElementById('p-thigh').value)||0
+    };
+    const sum = Object.values(s).reduce((a,b)=>a+b,0);
+    const age = userData.age || 25, gender = userData.gender || 'male';
+    let bd = (gender === 'male') ? 1.112 - (0.00043499*sum) + (0.00000055*sum*sum) - (0.00028826*age) : 1.097 - (0.00046971*sum) + (0.00000056*sum*sum) - (0.00012828*age);
+    const fat = ((495 / bd) - 450).toFixed(1);
+    await updateDoc(doc(db, "users", currentUser.uid), { skinfoldHistory: arrayUnion({date: new Date(), fat: fat, skinfolds: s}), skinfolds: s, bodyFat: fat });
+    alert(`Grasa: ${fat}%. Guardado ✅`); window.loadProfile();
+};
+
+window.saveConfig = async () => {
+    const rt = document.getElementById('cfg-rest-time').value;
+    await updateDoc(doc(db,"users",currentUser.uid), { restTime: parseInt(rt) });
+    userData.restTime = parseInt(rt);
+    alert("Ajustes Guardados");
+};
+window.savePhotoReminder = async () => {
+    const d = document.getElementById('photo-day').value;
+    const t = document.getElementById('photo-time').value;
+    await updateDoc(doc(db,"users",currentUser.uid), { photoDay:d, photoTime:t });
+    userData.photoDay = d; userData.photoTime = t;
+    alert("Alarma Guardada");
+};
+
+window.addWeightEntry = async () => { 
+    const wStr = prompt("Introduce tu peso (kg):");
+    if(!wStr) return;
+    const w = parseFloat(wStr.replace(',','.'));
+    if(isNaN(w)) return alert("Número inválido");
+    let history = userData.weightHistory || [];
+    history.push(w);
+    try {
+        await updateDoc(doc(db,"users",currentUser.uid), {weightHistory: history});
+        userData.weightHistory = history; 
+        window.loadProfile(); 
+        alert("✅ Peso Guardado");
+    } catch(e) { alert("Error al guardar: " + e.message); }
+};
+
+function saveLocalWorkout() {
+    localStorage.setItem('fit_active_workout', JSON.stringify(activeWorkout));
+}
+
+window.cancelWorkout = () => {
+    if(confirm("⚠ ¿SEGURO QUE QUIERES CANCELAR?\nSe perderán los datos de este entrenamiento.")) {
+        activeWorkout = null;
+        localStorage.removeItem('fit_active_workout');
+        if(durationInt) clearInterval(durationInt); // FIX: Parar crono
+        switchTab('routines-view');
     }
 };
 
-// ... LISTENERS ...
+window.startWorkout = async (rid) => {
+    if(document.getElementById('cfg-wake').checked && 'wakeLock' in navigator) try{wakeLock=await navigator.wakeLock.request('screen');}catch(e){}
+    try {
+        const snap = await getDoc(doc(db,"routines",rid)); 
+        const r = snap.data();
+        let lastWorkoutData = null;
+        const q = query(collection(db, "workouts"), where("uid", "==", currentUser.uid));
+        const wSnap = await getDocs(q);
+        const sameRoutine = wSnap.docs.map(d=>d.data()).filter(d => d.routine === r.name).sort((a,b) => b.date - a.date); 
+        if(sameRoutine.length > 0) lastWorkoutData = sameRoutine[0].details;
+
+        // FIX TIMER: Guardamos la hora de inicio REAL
+        const now = Date.now();
+        activeWorkout = { 
+            name: r.name, 
+            startTime: now, 
+            exs: r.exercises.map(n => {
+                const data = getExerciseData(n);
+                let sets = Array(5).fill().map((_,i)=>({r: i===0 ? 20 : 16, w:0, d:false, prev:'-'}));
+                if(lastWorkoutData) {
+                    const prevEx = lastWorkoutData.find(ld => ld.n === n);
+                    if(prevEx && prevEx.s) {
+                        sets = sets.map((s, i) => { if(prevEx.s[i]) s.prev = `${prevEx.s[i].r}x${prevEx.s[i].w}kg`; return s; });
+                    }
+                }
+                return { n:n, img:data.img, mInfo: data.mInfo, type: data.type, video: data.v, sets: sets }; 
+            })
+        };
+        
+        saveLocalWorkout(); renderWorkout(); switchTab('workout-view'); startTimerMini();
+    } catch(e) { alert("Error iniciando entreno: " + e.message); }
+};
+
+window.addSet = (exIdx) => { activeWorkout.exs[exIdx].sets.push({r:16, w:0, d:false, prev:'-'}); saveLocalWorkout(); renderWorkout(); };
+window.removeSet = (exIdx) => { if(activeWorkout.exs[exIdx].sets.length > 1) { activeWorkout.exs[exIdx].sets.pop(); saveLocalWorkout(); renderWorkout(); } };
+
+function renderWorkout() {
+    const c = document.getElementById('workout-exercises'); c.innerHTML = '';
+    document.getElementById('workout-title').innerText = activeWorkout.name;
+    activeWorkout.exs.forEach((e,i) => {
+        const card = document.createElement('div'); card.className = 'card'; card.style.borderLeft="3px solid var(--accent-color)";
+        
+        let videoBtnHtml = '';
+        if (userData.showVideos && e.video) {
+            videoBtnHtml = `<button class="btn-small btn-outline" style="float:right; width:auto; margin:0; padding:2px 8px; border-color:#f00; color:#f55;" onclick="window.openVideo('${e.video}')">🎥 VER</button>`;
+        }
+
+        let bars = '';
+        if (e.type === 'i') {
+             bars = `<div class="mini-bar-label"><span>${e.mInfo.main}</span><span>100%</span></div><div class="mini-track"><div class="mini-fill fill-primary"></div></div>`;
+        } else {
+             bars = `<div class="mini-bar-label"><span>${e.mInfo.main}</span><span>70%</span></div><div class="mini-track"><div class="mini-fill fill-primary" style="width:70%"></div></div>`;
+             e.mInfo.sec.forEach(s => { bars += `<div class="mini-bar-label" style="margin-top:4px;"><span>${s}</span><span>15%</span></div><div class="mini-track"><div class="mini-fill fill-sec" style="width:15%"></div></div>`; });
+        }
+        let setsHtml = `<div class="set-header"><div>#</div><div>PREV</div><div>REPS</div><div>KG</div><div></div></div>`;
+        e.sets.forEach((s,j) => {
+            const weightVal = s.w === 0 ? '' : s.w;
+            setsHtml += `<div class="set-row"><div class="set-num">${j+1}</div><div class="prev-data">${s.prev}</div><div><input type="number" value="${s.r}" onchange="uS(${i},${j},'r',this.value)"></div><div><input type="number" placeholder="kg" value="${weightVal}" onchange="uS(${i},${j},'w',this.value)"></div><button id="btn-${i}-${j}" class="btn-outline ${s.d?'btn-done':''}" style="margin:0;padding:0;height:35px;" onclick="tS(${i},${j})">${s.d?'✓':''}</button></div>`;
+        });
+        setsHtml += `<div class="sets-actions"><button class="btn-set-control" onclick="removeSet(${i})">- Serie</button><button class="btn-set-control" onclick="addSet(${i})">+ Serie</button></div>`;
+        card.innerHTML = `<div class="workout-split"><div class="workout-visual"><img src="${e.img}" onerror="this.src='logo.png'"></div><div class="workout-bars" style="width:100%">${bars}</div></div><h3 style="margin-bottom:10px; border:none;">${e.n} ${videoBtnHtml}</h3>${setsHtml}`;
+        c.appendChild(card);
+    });
+}
+
+window.uS = (i,j,k,v) => { activeWorkout.exs[i].sets[j][k]=v; saveLocalWorkout(); };
+window.tS = (i,j) => { const s = activeWorkout.exs[i].sets[j]; s.d = !s.d; saveLocalWorkout(); const btn = document.getElementById(`btn-${i}-${j}`); if(s.d) { btn.classList.add('btn-done'); btn.innerText = '✓'; openRest(); } else { btn.classList.remove('btn-done'); btn.innerText = ''; } };
+
+function openRest() {
+    const m = document.getElementById('modal-timer'); m.classList.add('active');
+    
+    const restSeconds = userData.restTime || 60;
+    restEndTime = Date.now() + (restSeconds * 1000);
+    
+    document.getElementById('timer-display').innerText = restSeconds;
+    
+    if(timerInt) clearInterval(timerInt);
+    
+    timerInt = setInterval(() => {
+        const now = Date.now();
+        const left = Math.ceil((restEndTime - now) / 1000);
+        
+        if(left >= 0) document.getElementById('timer-display').innerText = left;
+        
+        if(left <= 0) { 
+            clearInterval(timerInt); 
+            m.classList.remove('active'); 
+            
+            if(document.getElementById('cfg-sound').checked) { play5Beeps(); }
+            
+            // --- FIX NOTIFICACIÓN: DISPARAR AL ACABAR ---
+            if (Notification.permission === "granted") {
+                try {
+                    new Notification("¡TIEMPO! 🔔", { body: "Descanso finalizado. ¡A darle duro!", icon: "logo.png", vibrate: [200, 100, 200] });
+                } catch(e) { console.log(e); }
+            }
+        }
+    }, 500);
+}
+
+window.closeTimer = () => { clearInterval(timerInt); document.getElementById('modal-timer').classList.remove('active'); };
+
+window.addRestTime = (s) => { 
+    restEndTime += (s * 1000); 
+};
+
+// --- FIX TIMER: Usar intervalo global y limpiar ---
+function startTimerMini() { 
+    if(durationInt) clearInterval(durationInt); // LIMPIAR EL ANTERIOR
+    const d = document.getElementById('mini-timer'); 
+    
+    // USAR HORA REAL DE INICIO GUARDADA
+    const startTime = activeWorkout.startTime || Date.now(); 
+    
+    durationInt = setInterval(()=>{
+        const df = Math.floor((Date.now() - startTime)/1000); 
+        d.innerText=`${Math.floor(df/60)}:${(df%60).toString().padStart(2,'0')}`;
+    },1000); 
+}
+
+window.promptRPE = () => {
+    const radarCtx = document.getElementById('muscleRadarChart');
+    if(radarChartInstance) radarChartInstance.destroy();
+    const muscleCounts = { "Pecho":0, "Espalda":0, "Pierna":0, "Hombros":0, "Brazos":0, "Abs":0 };
+    activeWorkout.exs.forEach(e => {
+        const m = e.mInfo.main;
+        let key = "";
+        if(m==="Pecho") key="Pecho"; else if(m==="Espalda") key="Espalda";
+        else if(m==="Cuádriceps" || m==="Isquios" || m==="Glúteos" || m==="Gemelos") key="Pierna";
+        else if(m==="Hombros") key="Hombros"; else if(m==="Bíceps" || m==="Tríceps") key="Brazos";
+        else if(m==="Abs") key="Abs";
+        if(key) muscleCounts[key] += e.sets.length;
+    });
+    radarChartInstance = new Chart(radarCtx, {
+        type: 'radar',
+        data: { labels: Object.keys(muscleCounts), datasets: [{ label: 'Volumen', data: Object.values(muscleCounts), backgroundColor: 'rgba(255, 51, 51, 0.4)', borderColor: '#ff3333', pointBackgroundColor: '#fff', pointBorderColor: '#ff3333' }] },
+        options: { scales: { r: { angleLines: { color: '#333' }, grid: { color: '#333' }, pointLabels: { color: 'white' }, ticks: { display: false, backdropColor: 'transparent' } } }, plugins: { legend: { display: false } }, maintainAspectRatio: false }
+    });
+    document.getElementById('workout-notes').value = ''; 
+    document.getElementById('modal-rpe').classList.add('active');
+};
+
+window.finishWorkout = async (rpeVal) => {
+    document.getElementById('modal-rpe').classList.remove('active');
+    const note = document.getElementById('workout-notes').value; 
+    let s=0, r=0, k=0;
+    let muscleCounts = {};
+    let prAlert = ""; 
+    const cleanLog = activeWorkout.exs.map(e => { return { n: e.n, s: e.sets.filter(set => set.d).map(set => ({ r: set.r, w: set.w })) }; }).filter(e => e.s.length > 0); 
+    if(!userData.prs) userData.prs = {};
+    activeWorkout.exs.forEach(e => {
+        e.sets.forEach(st => { 
+            if(st.d) { 
+                s++; r+=parseInt(st.r)||0; 
+                const weight = parseInt(st.w)||0;
+                k+=weight*(parseInt(st.r)||0); 
+                const mName = e.mInfo.main;
+                muscleCounts[mName] = (muscleCounts[mName] || 0) + 1;
+                if(weight > (userData.prs[e.n] || 0)) { userData.prs[e.n] = weight; prAlert = `🏆 RÉCORD: ${e.n} (${weight}kg)\n`; }
+            }
+        });
+    });
+    if(prAlert) alert(prAlert); 
+    await addDoc(collection(db,"workouts"), { uid:currentUser.uid, date:serverTimestamp(), routine:activeWorkout.name, rpe: rpeVal, note: note, details: cleanLog });
+    const updates = { "stats.workouts": increment(1), "stats.totalSets": increment(s), "stats.totalReps": increment(r), "stats.totalKg": increment(k), "prs": userData.prs };
+    for (const [muscle, count] of Object.entries(muscleCounts)) { updates[`muscleStats.${muscle}`] = increment(count); }
+    await updateDoc(doc(db,"users",currentUser.uid), updates);
+    localStorage.removeItem('fit_active_workout'); 
+    if(wakeLock) wakeLock.release(); 
+    if(durationInt) clearInterval(durationInt); // Parar crono al terminar
+    switchTab('routines-view');
+};
+
+// --- FIX EVOLUCIÓN: Eliminamos orderBy de la query y ordenamos en cliente ---
+window.openProgress = async () => {
+    const m = document.getElementById('modal-progress');
+    const s = document.getElementById('progress-select');
+    s.innerHTML = '<option>Cargando datos...</option>';
+    m.classList.add('active');
+    try {
+        // Query corregida: Sin orderBy para evitar error de índice
+        const q = query(collection(db, "workouts"), where("uid", "==", currentUser.uid));
+        const snap = await getDocs(q);
+        
+        if (snap.empty) { s.innerHTML = '<option>Sin historial</option>'; return; }
+        
+        // Ordenamos en JS (fecha ascendente)
+        const history = snap.docs.map(d => d.data()).sort((a,b) => a.date - b.date);
+        
+        const uniqueExercises = new Set();
+        history.forEach(w => { if (w.details) { w.details.forEach(ex => uniqueExercises.add(ex.n)); } });
+        s.innerHTML = '<option value="">-- Selecciona Ejercicio --</option>';
+        Array.from(uniqueExercises).sort().forEach(exName => {
+            const opt = document.createElement('option'); opt.value = exName; opt.innerText = exName; s.appendChild(opt);
+        });
+        window.tempHistoryCache = history;
+    } catch (e) { console.error(e); s.innerHTML = '<option>Error cargando</option>'; }
+};
+
+window.renderProgressChart = (exName) => {
+    if (!exName || !window.tempHistoryCache) return;
+    const ctx = document.getElementById('progressChart');
+    if (progressChart) progressChart.destroy();
+    const dataPoints = [];
+    const labels = [];
+    window.tempHistoryCache.forEach(w => {
+        const dateStr = new Date(w.date.seconds * 1000).toLocaleDateString();
+        const exerciseData = w.details.find(d => d.n === exName);
+        if (exerciseData) {
+            let maxWeight = 0;
+            exerciseData.s.forEach(set => { const w = parseFloat(set.w) || 0; if (w > maxWeight) maxWeight = w; });
+            if (maxWeight > 0) { labels.push(dateStr); dataPoints.push(maxWeight); }
+        }
+    });
+    progressChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: [{ label: 'Peso Máximo (Kg)', data: dataPoints, borderColor: '#00ff88', backgroundColor: 'rgba(0, 255, 136, 0.1)', tension: 0.3, fill: true }] },
+        options: { plugins: { legend: { display: true, labels: { color: 'white' } } }, scales: { y: { grid: { color: '#333' }, ticks: { color: '#888' } }, x: { ticks: { color: '#888', maxTicksLimit: 5 } } }, maintainAspectRatio: false }
+    });
+};
+
 document.getElementById('btn-register').onclick=async()=>{
     const secretCode = document.getElementById('reg-code').value;
     try{ 
