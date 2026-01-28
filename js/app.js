@@ -58,26 +58,6 @@ window.toggleElement = (id) => {
     if(el) el.classList.toggle('hidden');
 };
 
-function checkInstallMode() {
-    // 1. Detectar estándar (Android/PC)
-    const isStandardStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    
-    // 2. Detectar específicamente iOS (iPhone/iPad)
-    const isIOSStandalone = window.navigator.standalone === true;
-
-    const banner = document.getElementById('installInstructions');
-    
-    if (banner) {
-        // Si cualquiera de los dos es verdadero, OCULTAMOS la caja
-        if (isStandardStandalone || isIOSStandalone) {
-            banner.style.display = 'none';
-        } else {
-            // Si es navegador normal, aseguramos que se vea
-            banner.style.display = 'block';
-        }
-    }
-}
-
 function unlockAudio() {
     if(!audioCtx) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -1017,6 +997,27 @@ async function openCoachView(uid,u) {
     const freshU = freshSnap.data();
     selectedUserObj = freshU; 
     switchTab('coach-detail-view');
+    // --- ⬇️ AÑADE ESTO AQUÍ (Lógica del Avatar) ⬇️ ---
+    const imgEl = document.getElementById('coach-user-img');
+    const initEl = document.getElementById('coach-user-initial');
+    
+    if (freshU.photo) {
+        // Si tiene foto: mostramos imagen, ocultamos letra
+        imgEl.src = freshU.photo;
+        imgEl.style.display = 'block'; // O 'inline-block' si prefieres
+        imgEl.style.width = '100%';    // Aseguramos que llene el círculo
+        imgEl.style.height = '100%';
+        imgEl.style.objectFit = 'cover'; // Para que no se deforme
+        imgEl.style.borderRadius = '50%'; // Redondeada
+        initEl.style.display = 'none';
+    } else {
+        // Si no tiene foto: ocultamos imagen, mostramos inicial
+        imgEl.style.display = 'none';
+        initEl.style.display = 'block';
+        // Ponemos la inicial del nombre real
+        initEl.innerText = freshU.name ? freshU.name.charAt(0).toUpperCase() : 'U';
+    }
+    // --- ⬆️ FIN DEL AÑADIDO ⬆️ ---
     document.getElementById('coach-user-name').innerText=freshU.name + (freshU.role === 'assistant' ? ' (Coach 🛡️)' : '');
     document.getElementById('coach-user-email').innerText=freshU.email;
     const genderIcon = freshU.gender === 'female' ? '♀️' : '♂️';
@@ -1167,8 +1168,32 @@ document.getElementById('btn-register').onclick=async()=>{
         });
     }catch(e){alert("Error: " + e.message + " (Posiblemente código secreto incorrecto)");}
 };
-
 document.getElementById('btn-login').onclick=()=>signInWithEmailAndPassword(auth,document.getElementById('login-email').value,document.getElementById('login-pass').value).catch(e=>alert(e.message));
 
+// ... (resto de tu código anterior) ...
 
+// ==========================================
+//   BLOQUEO DE GESTOS Y ZOOM (iOS/Android)
+// ==========================================
 
+// 1. Bloquear Zoom al "pellizcar" con dos dedos
+document.addEventListener('touchmove', function (event) {
+    if (event.scale !== 1) { 
+        event.preventDefault(); 
+    }
+}, { passive: false });
+
+// 2. Bloquear Zoom al hacer "Doble Tap" rápido
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function (event) {
+    const now = (new Date()).getTime();
+    if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+    }
+    lastTouchEnd = now;
+}, false);
+
+// 3. Bloquear gestos de sistema (como ir atrás deslizando) en algunos casos
+document.addEventListener('gesturestart', function (e) {
+    e.preventDefault();
+});
