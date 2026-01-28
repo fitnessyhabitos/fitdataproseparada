@@ -1120,7 +1120,7 @@ async function openCoachView(uid,u) {
                 let rpeBadge = d.rpe === 'Suave' ? '<span class="badge green">🟢</span>' : (d.rpe === 'Duro' ? '<span class="badge orange">🟠</span>' : (d.rpe === 'Fallo' ? '<span class="badge red">🔴</span>' : '<span class="badge gray">-</span>'));
                 const detailsStr = d.details ? encodeURIComponent(JSON.stringify(d.details)) : "";
                 const noteStr = d.note ? encodeURIComponent(d.note) : "";
-                const btnVer = d.details ? `<button class="btn-small btn-outline" style="margin:0; padding:2px 6px;" onclick="viewWorkoutDetails('${d.routine}', '${detailsStr}', '${noteStr}')">Ver Detalles</button>` : '';
+                const btnVer = d.details ? `<button class="btn-small btn-outline" style="margin:0; padding:2px 6px;" onclick="viewWorkoutDetails('${d.routine}', '${detailsStr}', '${noteStr}')">🔍</button>` : '';
                 hList.innerHTML += `<div class="history-row" style="grid-template-columns: 60px 1fr 30px 80px;"><div class="hist-date">${date}</div><div class="hist-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${d.routine}</div><div class="hist-rpe">${rpeBadge}</div><div>${btnVer}</div></div>`;
             });
         }
