@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App (Versión Definitiva Híbrida)...");
+console.log("⚡ FIT DATA: Iniciando App (Restauración)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -29,86 +29,68 @@ let durationInt = null;
 let restEndTime = 0; 
 let wakeLock = null;
 
-// INSTANCIA DE AUDIO PARA LA ISLA DINÁMICA (Silencio para visualización)
+// INSTANCIA DE AUDIO PARA LA ISLA DINÁMICA (Silencio)
 let globalSilentAudio = null;
 
-// --- MOTOR DE AUDIO (ALARMA REAL - AUDIO SPRINTING) ---
-// Genera una pista continua: Bip inicial -> Silencio activo -> Alarma final
+// --- MOTOR DE AUDIO (ALARMA FINAL AGRESIVA) ---
 const AudioController = {
     ctx: null,
-    oscillator: null,
-    gainNode: null,
-
-    init: function() {
+    
+    playAlarm: function() {
         if (!this.ctx) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioContext();
         }
-        if (this.ctx.state === 'suspended') {
-            this.ctx.resume();
-        }
-    },
-
-    playSequence: function(durationSeconds) {
-        this.init();
-        // Detener sonido anterior si existiera
-        this.stop();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
 
         const now = this.ctx.currentTime;
-        const endTime = now + durationSeconds;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
 
-        this.oscillator = this.ctx.createOscillator();
-        this.gainNode = this.ctx.createGain();
+        osc.type = 'sawtooth'; // Sonido agresivo
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
 
-        // Onda tipo sierra (sonido fuerte tipo gimnasio/cronómetro)
-        this.oscillator.type = 'sawtooth';
+        // SECUENCIA DE ALARMA (Sirena de 1.5s)
+        // Tono 1
+        osc.frequency.setValueAtTime(400, now);
+        gain.gain.setValueAtTime(1.0, now);
         
-        this.oscillator.connect(this.gainNode);
-        this.gainNode.connect(this.ctx.destination);
-
-        // --- PROGRAMACIÓN DE LA PISTA ---
-
-        // 1. BIP DE INICIO (0.1s)
-        this.oscillator.frequency.setValueAtTime(800, now);
-        this.gainNode.gain.setValueAtTime(0.3, now);
-        this.gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-
-        // 2. EL "SILENCIO ACTIVO"
-        // Mantenemos el volumen al mínimo (0.001) en lugar de 0 absoluto.
-        // Esto obliga al procesador de audio a seguir trabajando y evita cortes.
-        this.gainNode.gain.setValueAtTime(0.001, now + 0.1);
-        this.gainNode.gain.setValueAtTime(0.001, endTime - 0.1);
-
-        // 3. LA ALARMA FINAL
-        // Programamos que suene FUERTE justo al terminar el tiempo
+        // Tono 2 (Subida)
+        osc.frequency.linearRampToValueAtTime(600, now + 0.4);
         
-        // Tono 1: Grave
-        this.oscillator.frequency.setValueAtTime(400, endTime);
-        this.gainNode.gain.setValueAtTime(1.0, endTime); // MAX VOLUMEN
+        // Tono 3 (Bajada)
+        osc.frequency.linearRampToValueAtTime(400, now + 0.8);
         
-        // Tono 2: Agudo (Tipo sirena subiendo)
-        this.oscillator.frequency.setValueAtTime(600, endTime + 0.4);
-        this.gainNode.gain.setValueAtTime(1.0, endTime + 0.4);
+        // Tono 4 (Subida final)
+        osc.frequency.linearRampToValueAtTime(800, now + 1.2);
 
-        // Tono 3: Grave
-        this.oscillator.frequency.setValueAtTime(400, endTime + 0.8);
-        
-        // Tono 4: Agudo
-        this.oscillator.frequency.setValueAtTime(600, endTime + 1.2);
-
-        // Apagar sonido 2 segundos después de la alarma
-        this.gainNode.gain.exponentialRampToValueAtTime(0.001, endTime + 2);
-        this.oscillator.stop(endTime + 2.1);
-
-        // ARRANCAR
-        this.oscillator.start(now);
+        // Fade out rápido
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+        osc.start(now);
+        osc.stop(now + 1.6);
     },
 
-    stop: function() {
-        if (this.oscillator) {
-            try { this.oscillator.stop(); } catch(e){}
-            this.oscillator = null;
+    playBeep: function() {
+        // Bip corto para inicio
+        if (!this.ctx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
         }
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        
+        osc.frequency.setValueAtTime(800, now);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
     }
 };
 
@@ -143,17 +125,18 @@ window.toggleElement = (id) => {
 // --- GESTIÓN DE AUDIO BACKGROUND (VISUALIZACIÓN ISLA DINÁMICA) ---
 function initSilentAudio() {
     if (globalSilentAudio) return;
-    // MP3 de 10s de silencio en bucle (Base64)
-    const silentMP3 = "data:audio/mp3;base64,//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"; 
+    // MP3 de 10s de silencio en bucle (Base64) - Esto mantiene la Isla Dinámica activa
+    const silentMP3 = "data:audio/mp3;base64,//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"; 
     globalSilentAudio = new Audio(silentMP3);
     globalSilentAudio.loop = true;
-    globalSilentAudio.volume = 0.1; // Un pelín de volumen para que iOS lo detecte como "música"
+    globalSilentAudio.volume = 0.1; // Necesario para iOS
 }
 
-// Función de prueba para activar el audio antes del entreno
+// Función de prueba
 window.testSound = () => { 
     initSilentAudio();
-    AudioController.playSequence(2); // Prueba de alarma a los 2 segundos
+    if(globalSilentAudio) globalSilentAudio.play().catch(()=>{});
+    AudioController.playAlarm(); 
 };
 
 window.enableNotifications = () => {
@@ -163,7 +146,7 @@ window.enableNotifications = () => {
     }
     Notification.requestPermission().then((permission) => {
         if (permission === "granted") {
-            AudioController.playSequence(0.5); // Feedback sonoro
+            AudioController.playBeep();
             alert("✅ Vinculado. El reloj vibrará al acabar.");
             new Notification("Fit Data", { body: "Prueba de conexión exitosa.", icon: "logo.png" });
         } else {
@@ -172,7 +155,6 @@ window.enableNotifications = () => {
     });
 };
 
-// --- DETECCIÓN DE APP INSTALADA ---
 function checkInstallMode() {
     const isStandardStandalone = window.matchMedia('(display-mode: standalone)').matches;
     const isIOSStandalone = window.navigator.standalone === true;
@@ -186,7 +168,6 @@ function checkInstallMode() {
     }
 }
 
-// --- WAKE LOCK (MANTENER PANTALLA ENCENDIDA) ---
 async function requestWakeLock() {
     if(document.getElementById('cfg-wake') && document.getElementById('cfg-wake').checked && 'wakeLock' in navigator) {
         try {
@@ -195,14 +176,13 @@ async function requestWakeLock() {
     }
 }
 
-// Corrección de Drift visual (por si el contador visual se retrasa respecto al audio)
+// Corrección de Drift visual
 document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && activeWorkout && restEndTime > 0) {
         const now = Date.now();
         const left = Math.ceil((restEndTime - now) / 1000);
         if (left <= 0) {
             const timerDisplay = document.getElementById('timer-display');
-            // Si el audio ya sonó pero el modal sigue abierto, lo cerramos
             if(timerDisplay && timerDisplay.innerText !== "0") {
                 completeRest(); 
             }
@@ -703,7 +683,7 @@ window.cancelWorkout = () => {
         localStorage.removeItem('fit_active_workout');
         if(durationInt) clearInterval(durationInt); // FIX: Parar crono
         if(wakeLock) wakeLock.release(); // Soltar pantalla
-        AudioController.stop(); // Parar audio
+        if(globalSilentAudio) globalSilentAudio.pause();
         switchTab('routines-view');
     }
 };
@@ -805,7 +785,7 @@ window.tS = (i,j) => {
     } 
 };
 
-// --- FUNCIÓN DESCANSOS ACTUALIZADA CON AUDIO CONTINUO ---
+// --- FUNCIÓN DESCANSOS (HYBRID: AUDIO ISLA + ALARMA FINAL) ---
 function openRest() {
     const m = document.getElementById('modal-timer'); 
     m.classList.add('active');
@@ -815,28 +795,28 @@ function openRest() {
     
     document.getElementById('timer-display').innerText = restSeconds;
     
-    // 1. ARRANCAR EL MOTOR DE AUDIO CONTINUO
-    // Si el sonido está activado en configuración
-    if(document.getElementById('cfg-sound').checked) {
-        AudioController.playSequence(restSeconds);
+    // 1. ARRANCAR AUDIO DE ISLA DINÁMICA (Silencio de fondo)
+    if(!globalSilentAudio) { initSilentAudio(); }
+    if(globalSilentAudio) {
+        globalSilentAudio.currentTime = 0;
+        globalSilentAudio.play().catch(()=>{}); 
+        
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: `DESCANSO: ${restSeconds}s`,
+                artist: 'Fit Data Pro',
+                album: 'Recuperando...',
+                artwork: [{ src: 'logo.png', sizes: '96x96', type: 'image/png' }]
+            });
+            navigator.mediaSession.playbackState = "playing";
+            navigator.mediaSession.setActionHandler('play', () => {});
+            navigator.mediaSession.setActionHandler('pause', () => {});
+        }
     }
-
-    // 2. ISLA DINÁMICA VISUAL (Metadata)
-    if ('mediaSession' in navigator) {
-        // Reproducir silencio de fondo para que iOS no corte la sesión
-        if(!globalSilentAudio) initSilentAudio();
-        globalSilentAudio.play().catch(()=>{});
-
-        navigator.mediaSession.metadata = new MediaMetadata({
-            title: `DESCANSO: ${restSeconds}s`,
-            artist: 'Fit Data Pro',
-            album: 'Recuperando...',
-            artwork: [{ src: 'logo.png', sizes: '96x96', type: 'image/png' }]
-        });
-        navigator.mediaSession.playbackState = "playing";
-        // Dummy Handlers para que iOS no mate la sesión
-        navigator.mediaSession.setActionHandler('play', () => {});
-        navigator.mediaSession.setActionHandler('pause', () => {});
+    
+    // 2. SONIDO INICIAL (BIP CORTO)
+    if(document.getElementById('cfg-sound').checked) {
+        AudioController.playBeep();
     }
     
     if(timerInt) clearInterval(timerInt);
@@ -847,13 +827,11 @@ function openRest() {
         
         if(left >= 0) {
             document.getElementById('timer-display').innerText = left;
-            // Actualizar texto Isla Dinámica
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.metadata.title = `DESCANSO: ${left}s`;
             }
         }
         
-        // FIN DEL DESCANSO
         if(left <= 0) { 
             completeRest();
         }
@@ -865,17 +843,19 @@ function completeRest() {
     const m = document.getElementById('modal-timer'); 
     if(m) m.classList.remove('active'); 
     
-    // NOTA: El audio NO se para aquí, porque la función playSequence
-    // ya programó la alarma para sonar exactamente ahora.
-    // Solo actualizamos la UI.
-
+    // 1. SONAR ALARMA FINAL (FUERTE)
+    if(document.getElementById('cfg-sound').checked) { 
+        AudioController.playAlarm(); 
+    }
+    
+    // 2. ACTUALIZAR ISLA (TEXTO FINAL)
     if ('mediaSession' in navigator) {
         navigator.mediaSession.metadata.title = "¡A TRABAJAR!";
-        // Dejamos la sesión activa unos segundos para que se vea el aviso
+        // Parar el silencio después de la alarma
         setTimeout(() => {
              if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
              if(globalSilentAudio) globalSilentAudio.pause();
-        }, 3000);
+        }, 2000);
     }
 
     if (Notification.permission === "granted") {
@@ -888,16 +868,12 @@ function completeRest() {
 window.closeTimer = () => { 
     clearInterval(timerInt); 
     document.getElementById('modal-timer').classList.remove('active'); 
-    
-    AudioController.stop(); // Parar alarma si la hubiera
     if(globalSilentAudio) globalSilentAudio.pause();
     if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
 };
 
 window.addRestTime = (s) => { 
     restEndTime += (s * 1000); 
-    // Nota: Si añadimos tiempo, lo ideal sería reprogramar el audio, 
-    // pero para simplificar dejamos que suene la alarma original y el usuario reinicie.
 };
 
 // --- FIX TIMER: Usar intervalo global y limpiar ---
@@ -1360,33 +1336,34 @@ document.getElementById('btn-register').onclick=async()=>{
 document.getElementById('btn-login').onclick=()=>signInWithEmailAndPassword(auth,document.getElementById('login-email').value,document.getElementById('login-pass').value).catch(e=>alert(e.message));
 
 // ==========================================
-//   GESTIÓN MAESTRA DE INTERACCIÓN (FIX SEGURO)
+//   GESTIÓN MAESTRA DE INTERACCIÓN (FIX HÍBRIDO DEFINITIVO)
 // ==========================================
 
 document.addEventListener('DOMContentLoaded', () => {
     
-    // Detectamos si es iOS (iPhone/iPad)
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    // Detectamos si es iOS (iPhone/iPad) de forma robusta
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
     // 1. EL GUARDIÁN DEL SCROLL (SOLO PARA iOS)
-    // En Android desactivamos el preventDefault para que el scroll nativo funcione
+    // En Android esto no hace falta y a veces bloquea el scroll, así que lo desactivamos ahí.
     if (isIOS) {
         document.addEventListener('touchmove', function(e) {
             // Solo actuamos si existe el contenedor principal
             const mainContainer = document.getElementById('main-container');
             if (!mainContainer) return;
 
-            // Buscamos si el dedo está tocando algo dentro de #main-container
-            const isScrollable = e.target.closest('#main-container');
+            // Buscamos si el dedo está tocando algo dentro de #main-container o un modal
+            const isScrollable = e.target.closest('#main-container') || e.target.closest('.modal-content');
             
-            // Si NO es la zona de scroll (ej: Header, Footer, Barra negra), PROHIBIDO MOVER
+            // Si tocamos fuera (Header, Footer, Fondo negro), PROHIBIDO MOVER
             if (!isScrollable) {
                 e.preventDefault();
             }
         }, { passive: false });
     }
 
-    // 2. BLOQUEO DE ZOOM (Pellizco / Pinch) - Esto sí para todos
+    // 2. BLOQUEO DE ZOOM (Pellizco / Pinch) - Esto sí lo dejamos para todos
     document.addEventListener('touchmove', function (event) {
         if (event.scale !== 1) { 
             event.preventDefault(); 
