@@ -13,7 +13,7 @@
     --font-sport: 'Russo One', sans-serif;
     --safe-top: env(safe-area-inset-top, 20px); 
     --safe-bottom: env(safe-area-inset-bottom, 20px);
-    --header-height: 60px;
+    --header-height: 50px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -47,7 +47,7 @@ body {
 
     /* 4. Espaciado de seguridad */
     /* Ajusta estos px según la altura real de tu barra de arriba y abajo */
-    padding-top: calc(var(--header-height) + var(--safe-top) + 20px);
+    padding-top: 5px;
     padding-bottom: calc(var(--footer-height) + var(--safe-bottom) + 100px); 
     padding-left: 15px;
     padding-right: 15px;
@@ -252,4 +252,22 @@ input:checked + .slider { background-color: var(--accent-color); } input:checked
 .pwa-steps i {
     font-size: 1rem;        /* Iconos ajustados */
     color: #ff3333;
+}
+
+/* Estilo para la serie terminada */
+.set-completed {
+    background-color: rgba(255, 51, 51, 0.2); /* Rojo translúcido */
+    transition: background-color 0.3s ease;
+}
+
+/* Bloquea los inputs (peso/reps) para que no se puedan cambiar */
+.set-completed input {
+    pointer-events: none; 
+    opacity: 0.7; /* Un poco más apagado */
+    color: #aaa;
+}
+
+/* IMPORTANTE: Reactivamos el botón para poder desmarcar */
+.set-completed button {
+    pointer-events: auto !important;
 }

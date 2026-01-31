@@ -4,7 +4,7 @@ import { getFirestore, collection, doc, setDoc, getDoc, updateDoc, onSnapshot, q
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
 import { EXERCISES } from './data.js';
 
-console.log("⚡ FIT DATA: Iniciando App (Restauración)...");
+console.log("⚡ FIT DATA: Iniciando App (Menu Superior)...");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDW40Lg6QvBc3zaaA58konqsH3QtDrRmyM",
@@ -21,6 +21,7 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 
 // --- ESTADO GLOBAL ---
+let audioCtx = null;
 let currentUser = null; 
 let userData = null; 
 let activeWorkout = null; 
@@ -29,72 +30,6 @@ let durationInt = null;
 let restEndTime = 0; 
 let wakeLock = null;
 
-// INSTANCIA DE AUDIO PARA LA ISLA DINÁMICA (Silencio)
-let globalSilentAudio = null;
-
-// --- MOTOR DE AUDIO (ALARMA FINAL AGRESIVA) ---
-const AudioController = {
-    ctx: null,
-    
-    playAlarm: function() {
-        if (!this.ctx) {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.ctx = new AudioContext();
-        }
-        if (this.ctx.state === 'suspended') this.ctx.resume();
-
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-
-        osc.type = 'sawtooth'; // Sonido agresivo
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-
-        // SECUENCIA DE ALARMA (Sirena de 1.5s)
-        // Tono 1
-        osc.frequency.setValueAtTime(400, now);
-        gain.gain.setValueAtTime(1.0, now);
-        
-        // Tono 2 (Subida)
-        osc.frequency.linearRampToValueAtTime(600, now + 0.4);
-        
-        // Tono 3 (Bajada)
-        osc.frequency.linearRampToValueAtTime(400, now + 0.8);
-        
-        // Tono 4 (Subida final)
-        osc.frequency.linearRampToValueAtTime(800, now + 1.2);
-
-        // Fade out rápido
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
-        osc.start(now);
-        osc.stop(now + 1.6);
-    },
-
-    playBeep: function() {
-        // Bip corto para inicio
-        if (!this.ctx) {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.ctx = new AudioContext();
-        }
-        if (this.ctx.state === 'suspended') this.ctx.resume();
-
-        const now = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = 'square';
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
-        
-        osc.frequency.setValueAtTime(800, now);
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-        osc.start(now);
-        osc.stop(now + 0.1);
-    }
-};
-
-// --- VARIABLES DE GRÁFICOS Y UI ---
 let chartInstance = null; 
 let progressChart = null; 
 let fatChartInstance = null; 
@@ -103,6 +38,7 @@ let coachFatChart = null;
 let coachMeasureChart = null; 
 let radarChartInstance = null;
 let coachChart = null;
+
 let selectedUserCoach = null; 
 let selectedUserObj = null; 
 let editingRoutineId = null; 
@@ -122,22 +58,38 @@ window.toggleElement = (id) => {
     if(el) el.classList.toggle('hidden');
 };
 
-// --- GESTIÓN DE AUDIO BACKGROUND (VISUALIZACIÓN ISLA DINÁMICA) ---
-function initSilentAudio() {
-    if (globalSilentAudio) return;
-    // MP3 de 10s de silencio en bucle (Base64) - Esto mantiene la Isla Dinámica activa
-    const silentMP3 = "data:audio/mp3;base64,//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq"; 
-    globalSilentAudio = new Audio(silentMP3);
-    globalSilentAudio.loop = true;
-    globalSilentAudio.volume = 0.1; // Necesario para iOS
+function unlockAudio() {
+    if(!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+    }
+    if(audioCtx.state === 'suspended') { audioCtx.resume(); }
+    const buffer = audioCtx.createBuffer(1, 1, 22050);
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioCtx.destination);
+    source.start(0);
 }
+document.addEventListener('touchstart', unlockAudio, {once:true});
+document.addEventListener('click', unlockAudio, {once:true});
 
-// Función de prueba
-window.testSound = () => { 
-    initSilentAudio();
-    if(globalSilentAudio) globalSilentAudio.play().catch(()=>{});
-    AudioController.playAlarm(); 
-};
+function play5Beeps() {
+    if(!audioCtx) unlockAudio();
+    if(audioCtx) {
+        const now = audioCtx.currentTime;
+        for(let i=0; i<5; i++) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square'; osc.frequency.value = 880; 
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const start = now + (i * 0.6); const end = start + 0.15;
+            osc.start(start); osc.stop(end);
+            gain.gain.setValueAtTime(0.5, start);
+            gain.gain.exponentialRampToValueAtTime(0.01, end);
+        }
+    }
+}
+window.testSound = () => { play5Beeps(); };
 
 window.enableNotifications = () => {
     if (!("Notification" in window)) {
@@ -146,7 +98,6 @@ window.enableNotifications = () => {
     }
     Notification.requestPermission().then((permission) => {
         if (permission === "granted") {
-            AudioController.playBeep();
             alert("✅ Vinculado. El reloj vibrará al acabar.");
             new Notification("Fit Data", { body: "Prueba de conexión exitosa.", icon: "logo.png" });
         } else {
@@ -154,41 +105,6 @@ window.enableNotifications = () => {
         }
     });
 };
-
-function checkInstallMode() {
-    const isStandardStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isIOSStandalone = window.navigator.standalone === true;
-    const banner = document.getElementById('installInstructions');
-    if (banner) {
-        if (isStandardStandalone || isIOSStandalone) {
-            banner.style.display = 'none';
-        } else {
-            banner.style.display = 'block';
-        }
-    }
-}
-
-async function requestWakeLock() {
-    if(document.getElementById('cfg-wake') && document.getElementById('cfg-wake').checked && 'wakeLock' in navigator) {
-        try {
-            wakeLock = await navigator.wakeLock.request('screen');
-        } catch (err) { console.error("Wake Lock error:", err); }
-    }
-}
-
-// Corrección de Drift visual
-document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible" && activeWorkout && restEndTime > 0) {
-        const now = Date.now();
-        const left = Math.ceil((restEndTime - now) / 1000);
-        if (left <= 0) {
-            const timerDisplay = document.getElementById('timer-display');
-            if(timerDisplay && timerDisplay.innerText !== "0") {
-                completeRest(); 
-            }
-        }
-    }
-});
 
 onAuthStateChanged(auth, async (user) => {
     if(user) {
@@ -198,6 +114,7 @@ onAuthStateChanged(auth, async (user) => {
             userData = snap.data();
             checkPhotoReminder();
             
+            // Lógica Coach Button
             if(userData.role === 'admin' || userData.role === 'assistant') {
                 const btn = document.getElementById('top-btn-coach');
                 if(btn) btn.classList.remove('hidden');
@@ -211,7 +128,7 @@ onAuthStateChanged(auth, async (user) => {
             if(userData.approved){
                 setTimeout(() => { document.getElementById('loading-screen').classList.add('hidden'); }, 1500); 
                 document.getElementById('main-header').classList.remove('hidden');
-                checkInstallMode();
+                
                 loadRoutines();
                 const savedW = localStorage.getItem('fit_active_workout');
                 if(savedW) {
@@ -219,7 +136,6 @@ onAuthStateChanged(auth, async (user) => {
                     renderWorkout();
                     switchTab('workout-view');
                     startTimerMini();
-                    requestWakeLock();
                 } else { switchTab('routines-view'); }
             } else { alert("Cuenta en revisión."); signOut(auth); }
         }
@@ -239,10 +155,14 @@ function checkPhotoReminder() {
 }
 
 window.switchTab = (t) => {
+    // 1. Ocultar todas las vistas
     document.querySelectorAll('.view-container').forEach(e => e.classList.remove('active'));
+    // 2. Mostrar la seleccionada
     document.getElementById(t).classList.add('active');
+    // 3. Resetear scroll
     document.getElementById('main-container').scrollTop = 0;
     
+    // 4. Actualizar botones del HEADER (top-nav-item)
     document.querySelectorAll('.top-nav-item').forEach(n => n.classList.remove('active'));
     
     if (t === 'routines-view') document.getElementById('top-btn-routines').classList.add('active');
@@ -682,16 +602,12 @@ window.cancelWorkout = () => {
         activeWorkout = null;
         localStorage.removeItem('fit_active_workout');
         if(durationInt) clearInterval(durationInt); // FIX: Parar crono
-        if(wakeLock) wakeLock.release(); // Soltar pantalla
-        if(globalSilentAudio) globalSilentAudio.pause();
         switchTab('routines-view');
     }
 };
 
 window.startWorkout = async (rid) => {
-    await requestWakeLock(); // PANTALLA ENCENDIDA
-    initSilentAudio(); // PREPARAR AUDIO BACKGROUND
-
+    if(document.getElementById('cfg-wake').checked && 'wakeLock' in navigator) try{wakeLock=await navigator.wakeLock.request('screen');}catch(e){}
     try {
         const snap = await getDoc(doc(db,"routines",rid)); 
         const r = snap.data();
@@ -747,17 +663,17 @@ function renderWorkout() {
         let setsHtml = `<div class="set-header"><div>#</div><div>PREV</div><div>REPS</div><div>KG</div><div></div></div>`;
         e.sets.forEach((s,j) => {
             const weightVal = s.w === 0 ? '' : s.w;
-            // Añadimos id y clase condicional
-            const rowClass = s.d ? 'set-row set-completed' : 'set-row';
-            
-            setsHtml += `<div id="set-row-${i}-${j}" class="${rowClass}">
-                <div class="set-num">${j+1}</div>
-                <div class="prev-data">${s.prev}</div>
-                <div><input type="number" value="${s.r}" onchange="uS(${i},${j},'r',this.value)"></div>
-                <div><input type="number" placeholder="kg" value="${weightVal}" onchange="uS(${i},${j},'w',this.value)"></div>
-                <button id="btn-${i}-${j}" class="btn-outline ${s.d?'btn-done':''}" style="margin:0;padding:0;height:35px;" onclick="tS(${i},${j})">${s.d?'✓':''}</button>
-            </div>`;
-        });
+           // CAMBIO AQUÍ: Añadimos id="set-row-${i}-${j}" y la clase condicional
+    const rowClass = s.d ? 'set-row set-completed' : 'set-row';
+    
+    setsHtml += `<div id="set-row-${i}-${j}" class="${rowClass}">
+        <div class="set-num">${j+1}</div>
+        <div class="prev-data">${s.prev}</div>
+        <div><input type="number" value="${s.r}" onchange="uS(${i},${j},'r',this.value)"></div>
+        <div><input type="number" placeholder="kg" value="${weightVal}" onchange="uS(${i},${j},'w',this.value)"></div>
+        <button id="btn-${i}-${j}" class="btn-outline ${s.d?'btn-done':''}" style="margin:0;padding:0;height:35px;" onclick="tS(${i},${j})">${s.d?'✓':''}</button>
+    </div>`;
+});
         setsHtml += `<div class="sets-actions"><button class="btn-set-control" onclick="removeSet(${i})">- Serie</button><button class="btn-set-control" onclick="addSet(${i})">+ Serie</button></div>`;
         card.innerHTML = `<div class="workout-split"><div class="workout-visual"><img src="${e.img}" onerror="this.src='logo.png'"></div><div class="workout-bars" style="width:100%">${bars}</div></div><h3 style="margin-bottom:10px; border:none;">${e.n} ${videoBtnHtml}</h3>${setsHtml}`;
         c.appendChild(card);
@@ -770,54 +686,36 @@ window.tS = (i,j) => {
     s.d = !s.d; 
     saveLocalWorkout(); 
     
+    // 1. Actualizar Botón (Esto ya lo tenías)
     const btn = document.getElementById(`btn-${i}-${j}`); 
+    
+    // 2. Actualizar Fila entera (NUEVO)
     const row = document.getElementById(`set-row-${i}-${j}`);
     
     if(s.d) { 
         btn.classList.add('btn-done'); 
         btn.innerText = '✓'; 
+        
+        // Ponemos la fila roja y bloqueada
         if(row) row.classList.add('set-completed');
+        
         openRest(); 
     } else { 
         btn.classList.remove('btn-done'); 
         btn.innerText = ''; 
+        
+        // Quitamos el rojo y desbloqueamos
         if(row) row.classList.remove('set-completed');
     } 
 };
 
-// --- FUNCIÓN DESCANSOS (HYBRID: AUDIO ISLA + ALARMA FINAL) ---
 function openRest() {
-    const m = document.getElementById('modal-timer'); 
-    m.classList.add('active');
+    const m = document.getElementById('modal-timer'); m.classList.add('active');
     
     const restSeconds = userData.restTime || 60;
     restEndTime = Date.now() + (restSeconds * 1000);
     
     document.getElementById('timer-display').innerText = restSeconds;
-    
-    // 1. ARRANCAR AUDIO DE ISLA DINÁMICA (Silencio de fondo)
-    if(!globalSilentAudio) { initSilentAudio(); }
-    if(globalSilentAudio) {
-        globalSilentAudio.currentTime = 0;
-        globalSilentAudio.play().catch(()=>{}); 
-        
-        if ('mediaSession' in navigator) {
-            navigator.mediaSession.metadata = new MediaMetadata({
-                title: `DESCANSO: ${restSeconds}s`,
-                artist: 'Fit Data Pro',
-                album: 'Recuperando...',
-                artwork: [{ src: 'logo.png', sizes: '96x96', type: 'image/png' }]
-            });
-            navigator.mediaSession.playbackState = "playing";
-            navigator.mediaSession.setActionHandler('play', () => {});
-            navigator.mediaSession.setActionHandler('pause', () => {});
-        }
-    }
-    
-    // 2. SONIDO INICIAL (BIP CORTO)
-    if(document.getElementById('cfg-sound').checked) {
-        AudioController.playBeep();
-    }
     
     if(timerInt) clearInterval(timerInt);
     
@@ -825,52 +723,24 @@ function openRest() {
         const now = Date.now();
         const left = Math.ceil((restEndTime - now) / 1000);
         
-        if(left >= 0) {
-            document.getElementById('timer-display').innerText = left;
-            if ('mediaSession' in navigator) {
-                navigator.mediaSession.metadata.title = `DESCANSO: ${left}s`;
-            }
-        }
+        if(left >= 0) document.getElementById('timer-display').innerText = left;
         
         if(left <= 0) { 
-            completeRest();
+            clearInterval(timerInt); 
+            m.classList.remove('active'); 
+            
+            if(document.getElementById('cfg-sound').checked) { play5Beeps(); }
+            
+            if (Notification.permission === "granted") {
+                try {
+                    new Notification("¡A ENTRENAR! 💪", { body: "Descanso finalizado.", icon: "logo.png", vibrate: [200, 100, 200], tag: "rest-timer" });
+                } catch(e) { console.log(e); }
+            }
         }
     }, 500);
 }
 
-function completeRest() {
-    if(timerInt) clearInterval(timerInt); 
-    const m = document.getElementById('modal-timer'); 
-    if(m) m.classList.remove('active'); 
-    
-    // 1. SONAR ALARMA FINAL (FUERTE)
-    if(document.getElementById('cfg-sound').checked) { 
-        AudioController.playAlarm(); 
-    }
-    
-    // 2. ACTUALIZAR ISLA (TEXTO FINAL)
-    if ('mediaSession' in navigator) {
-        navigator.mediaSession.metadata.title = "¡A TRABAJAR!";
-        // Parar el silencio después de la alarma
-        setTimeout(() => {
-             if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
-             if(globalSilentAudio) globalSilentAudio.pause();
-        }, 2000);
-    }
-
-    if (Notification.permission === "granted") {
-        try {
-            new Notification("¡A ENTRENAR! 💪", { body: "Descanso finalizado.", icon: "logo.png", vibrate: [200, 100, 200], tag: "rest-timer" });
-        } catch(e) {}
-    }
-}
-
-window.closeTimer = () => { 
-    clearInterval(timerInt); 
-    document.getElementById('modal-timer').classList.remove('active'); 
-    if(globalSilentAudio) globalSilentAudio.pause();
-    if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
-};
+window.closeTimer = () => { clearInterval(timerInt); document.getElementById('modal-timer').classList.remove('active'); };
 
 window.addRestTime = (s) => { 
     restEndTime += (s * 1000); 
@@ -938,7 +808,7 @@ window.finishWorkout = async (rpeVal) => {
     for (const [muscle, count] of Object.entries(muscleCounts)) { updates[`muscleStats.${muscle}`] = increment(count); }
     await updateDoc(doc(db,"users",currentUser.uid), updates);
     localStorage.removeItem('fit_active_workout'); 
-    if(wakeLock) wakeLock.release(); // Soltar pantalla
+    if(wakeLock) wakeLock.release(); 
     if(durationInt) clearInterval(durationInt); // Parar crono al terminar
     switchTab('routines-view');
 };
@@ -1285,7 +1155,7 @@ async function openCoachView(uid,u) {
                 let rpeBadge = d.rpe === 'Suave' ? '<span class="badge green">🟢</span>' : (d.rpe === 'Duro' ? '<span class="badge orange">🟠</span>' : (d.rpe === 'Fallo' ? '<span class="badge red">🔴</span>' : '<span class="badge gray">-</span>'));
                 const detailsStr = d.details ? encodeURIComponent(JSON.stringify(d.details)) : "";
                 const noteStr = d.note ? encodeURIComponent(d.note) : "";
-                const btnVer = d.details ? `<button class="btn-small btn-outline" style="margin:0; padding:2px 6px;" onclick="viewWorkoutDetails('${d.routine}', '${detailsStr}', '${noteStr}')">🔍</button>` : '';
+                const btnVer = d.details ? `<button class="btn-small btn-outline" style="margin:0; padding:2px 6px;" onclick="viewWorkoutDetails('${d.routine}', '${detailsStr}', '${noteStr}')">Ver Detalles</button>` : '';
                 hList.innerHTML += `<div class="history-row" style="grid-template-columns: 60px 1fr 30px 80px;"><div class="hist-date">${date}</div><div class="hist-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${d.routine}</div><div class="hist-rpe">${rpeBadge}</div><div>${btnVer}</div></div>`;
             });
         }
@@ -1334,55 +1204,3 @@ document.getElementById('btn-register').onclick=async()=>{
     }catch(e){alert("Error: " + e.message + " (Posiblemente código secreto incorrecto)");}
 };
 document.getElementById('btn-login').onclick=()=>signInWithEmailAndPassword(auth,document.getElementById('login-email').value,document.getElementById('login-pass').value).catch(e=>alert(e.message));
-
-// ==========================================
-//   GESTIÓN MAESTRA DE INTERACCIÓN (FIX HÍBRIDO DEFINITIVO)
-// ==========================================
-
-document.addEventListener('DOMContentLoaded', () => {
-    
-    // Detectamos si es iOS (iPhone/iPad) de forma robusta
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || 
-                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-    // 1. EL GUARDIÁN DEL SCROLL (SOLO PARA iOS)
-    // En Android esto no hace falta y a veces bloquea el scroll, así que lo desactivamos ahí.
-    if (isIOS) {
-        document.addEventListener('touchmove', function(e) {
-            // Solo actuamos si existe el contenedor principal
-            const mainContainer = document.getElementById('main-container');
-            if (!mainContainer) return;
-
-            // Buscamos si el dedo está tocando algo dentro de #main-container o un modal
-            const isScrollable = e.target.closest('#main-container') || e.target.closest('.modal-content');
-            
-            // Si tocamos fuera (Header, Footer, Fondo negro), PROHIBIDO MOVER
-            if (!isScrollable) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-    }
-
-    // 2. BLOQUEO DE ZOOM (Pellizco / Pinch) - Esto sí lo dejamos para todos
-    document.addEventListener('touchmove', function (event) {
-        if (event.scale !== 1) { 
-            event.preventDefault(); 
-        }
-    }, { passive: false });
-
-    // 3. BLOQUEO DE ZOOM (Doble Tap rápido)
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', function (event) {
-        const now = (new Date()).getTime();
-        if (now - lastTouchEnd <= 300) {
-            event.preventDefault();
-        }
-        lastTouchEnd = now;
-    }, false);
-
-    // 4. BLOQUEO GESTOS SISTEMA
-    document.addEventListener('gesturestart', function (e) {
-        e.preventDefault();
-    });
-
-}); // <--- Cierre del DOMContentLoaded
